@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Croydon Mosque & Islamic Centre</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Amiri:wght@400;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: #F2EDE7;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: #6E1E2C;
+      padding: 1.8vh 0;
+      text-align: center;
+    }
+
+    .header img {
+      height: 5.5vh;
+      filter: brightness(0) invert(1);
+    }
+
+    /* ── CLOCK + DATES ── */
+    .clock-section {
+      background: linear-gradient(180deg, #6E1E2C 0%, #5A1522 60%, #4D1120 100%);
+      text-align: center;
+      padding: 1.5vh 0 2vh;
+    }
+
+    .clock {
+      font-size: 11vh;
+      font-weight: 800;
+      color: #FFFFFF;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .clock .seconds {
+      font-size: 5vh;
+      font-weight: 400;
+      color: rgba(255,255,255,0.5);
+      vertical-align: super;
+    }
+
+    .date-row {
+      margin-top: 0.8vh;
+    }
+
+    .gregorian-date {
+      font-size: 2vh;
+      color: rgba(255,255,255,0.75);
+    }
+
+    .hijri-date {
+      font-family: 'Amiri', serif;
+      font-size: 2.2vh;
+      color: #D4A843;
+      font-weight: 700;
+      margin-top: 0.3vh;
+      direction: rtl;
+    }
+
+    /* ── NEXT PRAYER BANNER ── */
+    .next-banner {
+      background: rgba(0,0,0,0.3);
+      margin: 0;
+      padding: 1.2vh 4vw;
+      text-align: center;
+      background: linear-gradient(135deg, #4D1120 0%, #3A0C16 100%);
+      border-bottom: 0.4vh solid #D4A843;
+    }
+
+    .next-banner .label {
+      font-size: 1.3vh;
+      font-weight: 600;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+
+    .next-banner .info {
+      font-size: 2.8vh;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 0.2vh;
+    }
+
+    .next-banner .info .name {
+      color: #D4A843;
+    }
+
+    .next-banner .remaining {
+      font-size: 1.5vh;
+      color: rgba(255,255,255,0.45);
+      margin-top: 0.2vh;
+    }
+
+    /* ── PRAYER TABLE ── */
+    .prayer-table-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5vh 3vw 0;
+      min-height: 0;
+    }
+
+    .prayer-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #FFFFFF;
+      border-radius: 1.5vh;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      border: 1px solid #E8E2DA;
+      min-height: 0;
+    }
+
+    /* Table header */
+    .t-head {
+      background: #6E1E2C;
+      display: grid;
+      grid-template-columns: 2fr 1.3fr 1.3fr;
+      padding: 1.3vh 3.5vw;
+    }
+
+    .t-head span {
+      font-size: 1.7vh;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .t-head span:not(:first-child) { text-align: center; }
+
+    /* Prayer rows */
+    .p-row {
+      display: grid;
+      grid-template-columns: 2fr 1.3fr 1.3fr;
+      align-items: center;
+      padding: 0 3.5vw;
+      border-bottom: 1px solid #F0EBE4;
+      flex: 1;
+      min-height: 0;
+      transition: background 0.3s;
+    }
+
+    .p-row:last-child { border-bottom: none; }
+
+    .p-row.active {
+      background: #FDF6ED;
+      position: relative;
+    }
+
+    .p-row.active::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0.5vw;
+      background: #D4A843;
+    }
+
+    .p-row.passed { opacity: 0.35; }
+
+    .p-name {
+      font-size: 2.8vh;
+      font-weight: 700;
+      color: #2C2C2C;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 1vw;
+    }
+
+    .badge-next {
+      display: none;
+      font-size: 1vh;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: #4CAF50;
+      padding: 0.2vh 0.7vw;
+      border-radius: 0.5vh;
+      letter-spacing: 0.5px;
+    }
+
+    .p-row.active .badge-next { display: inline-block; }
+
+    .p-start, .p-iqamah { text-align: center; }
+
+    .p-start .main {
+      font-size: 2.8vh;
+      font-weight: 500;
+      color: #444;
+    }
+
+    .p-start .tomorrow {
+      font-size: 1.4vh;
+      color: #D4843A;
+      font-weight: 500;
+    }
+
+    .p-iqamah .main {
+      font-size: 2.8vh;
+      font-weight: 800;
+      color: #6E1E2C;
+    }
+
+    .p-iqamah .tomorrow {
+      font-size: 1.4vh;
+      color: #D4843A;
+      font-weight: 500;
+    }
+
+    /* ── JUMUAH ROW ── */
+    .jumuah-row {
+      display: grid;
+      grid-template-columns: 2fr 1.3fr 1.3fr;
+      align-items: center;
+      padding: 0 3.5vw;
+      background: #FDFAF5;
+      border-top: 2px solid #E8E2DA;
+      min-height: 5vh;
+    }
+
+    .jumuah-row .p-name { color: #6E1E2C; }
+
+    .jum-col { text-align: center; }
+
+    .jum-label {
+      font-size: 1.2vh;
+      color: #999;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .jum-val {
+      font-size: 2.2vh;
+      font-weight: 700;
+      color: #2C2C2C;
+    }
+
+    /* ── BOTTOM: Sunrise / Ishraq / Zawaal ── */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: 1vh 3vw;
+      gap: 1.5vw;
+    }
+
+    .bottom-item {
+      text-align: center;
+      background: #FFFFFF;
+      border-radius: 1vh;
+      padding: 0.8vh 0;
+      border: 1px solid #E8E2DA;
+    }
+
+    .bottom-item .bl {
+      font-size: 1.3vh;
+      font-weight: 700;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .bottom-item .bv {
+      font-size: 2.2vh;
+      font-weight: 600;
+      color: #D4A843;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: #6E1E2C;
+      padding: 0.8vh 3vw;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 1.1vh;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* Pulse */
+    @keyframes glow {
+      0%, 100% { background: #FDF6ED; }
+      50% { background: #FFF0D4; }
+    }
+    .p-row.iqamah-soon { animation: glow 2s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <img src="logo.png" alt="Croydon Mosque & Islamic Centre">
+  </div>
+
+  <!-- Clock & Dates -->
+  <div class="clock-section">
+    <div class="clock"><span id="hours">08</span>:<span id="mins">40</span><span class="seconds" id="secs">44</span></div>
+    <div class="date-row">
+      <div class="gregorian-date" id="gregDate">Saturday 7 February 2026</div>
+      <div class="hijri-date" id="hijriDate">١٨ شعبان ١٤٤٧ هـ</div>
+    </div>
+  </div>
+
+  <!-- Next Prayer -->
+  <div class="next-banner">
+    <div class="label">Next Prayer</div>
+    <div class="info"><span class="name" id="nextName">Fajr</span> &mdash; <span id="nextTime">6:30 AM</span></div>
+    <div class="remaining" id="countdown">10h 12m remaining</div>
+  </div>
+
+  <!-- Prayer Table -->
+  <div class="prayer-table-wrap">
+    <div class="prayer-card">
+      <div class="t-head">
+        <span></span>
+        <span>Start</span>
+        <span>Iqamah</span>
+      </div>
+
+      <div class="p-row" id="row-fajr">
+        <div class="p-name">Fajr <span class="badge-next">NEXT</span></div>
+        <div class="p-start"><div class="main" id="start-fajr">5:35</div><div class="tomorrow" id="tmr-s-fajr"></div></div>
+        <div class="p-iqamah"><div class="main" id="iq-fajr">6:30</div><div class="tomorrow" id="tmr-i-fajr"></div></div>
+      </div>
+
+      <div class="p-row" id="row-dhuhr">
+        <div class="p-name">Dhuhr <span class="badge-next">NEXT</span></div>
+        <div class="p-start"><div class="main" id="start-dhuhr">12:19</div><div class="tomorrow" id="tmr-s-dhuhr"></div></div>
+        <div class="p-iqamah"><div class="main" id="iq-dhuhr">1:30</div><div class="tomorrow" id="tmr-i-dhuhr"></div></div>
+      </div>
+
+      <div class="p-row" id="row-asr">
+        <div class="p-name">Asr <span class="badge-next">NEXT</span></div>
+        <div class="p-start"><div class="main" id="start-asr">3:13</div><div class="tomorrow" id="tmr-s-asr"></div></div>
+        <div class="p-iqamah"><div class="main" id="iq-asr">4:00</div><div class="tomorrow" id="tmr-i-asr"></div></div>
+      </div>
+
+      <div class="p-row" id="row-maghrib">
+        <div class="p-name">Maghrib <span class="badge-next">NEXT</span></div>
+        <div class="p-start"><div class="main" id="start-maghrib">5:07</div><div class="tomorrow" id="tmr-s-maghrib"></div></div>
+        <div class="p-iqamah"><div class="main" id="iq-maghrib">5:07</div><div class="tomorrow" id="tmr-i-maghrib"></div></div>
+      </div>
+
+      <div class="p-row" id="row-isha">
+        <div class="p-name">Isha <span class="badge-next">NEXT</span></div>
+        <div class="p-start"><div class="main" id="start-isha">6:55</div><div class="tomorrow" id="tmr-s-isha"></div></div>
+        <div class="p-iqamah"><div class="main" id="iq-isha">8:00</div><div class="tomorrow" id="tmr-i-isha"></div></div>
+      </div>
+
+      <!-- Jumuah -->
+      <div class="jumuah-row">
+        <div class="p-name">Jumu'ah</div>
+        <div class="jum-col"><div class="jum-label">1st</div><div class="jum-val" id="jum1">12:25</div></div>
+        <div class="jum-col"><div class="jum-label">2nd</div><div class="jum-val" id="jum2">1:25</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom: Sunrise / Ishraq / Zawaal -->
+  <div class="bottom-row">
+    <div class="bottom-item"><div class="bl">Sunrise</div><div class="bv" id="sunrise">7:28</div></div>
+    <div class="bottom-item"><div class="bl">Ishraq</div><div class="bv" id="ishraq">7:43</div></div>
+    <div class="bottom-item"><div class="bl">Zawaal</div><div class="bv" id="zawaal">12:09</div></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-text">Croydon Mosque & Islamic Centre</div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      iqamah: {
+        fajr: [6,30], dhuhr: [13,30], asr: [16,0], maghrib: null, isha: [20,0],
+      },
+      jumuah1: "12:25", jumuah2: "1:25",
+      ishraqOffset: 15,
+      lat: 51.3762, lng: -0.0986, tz: "Europe/London", asrMethod: 0,
+    };
+
+    const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
+
+    function calcTimes(date) {
+      const lat=CONFIG.lat,lng=CONFIG.lng;
+      const y=date.getFullYear(),mo=date.getMonth()+1,dy=date.getDate();
+      let A=Math.floor((14-mo)/12),Y=y+4800-A,M=mo+12*A-3;
+      let JD=dy+Math.floor((153*M+2)/5)+365*Y+Math.floor(Y/4)-Math.floor(Y/100)+Math.floor(Y/400)-32045;
+      let D=JD-2451545.0,g=(357.529+0.98560028*D)%360,q=(280.459+0.98564736*D)%360;
+      let L=(q+1.915*Math.sin(toRad(g))+0.020*Math.sin(toRad(2*g)))%360;
+      let e=23.439-0.00000036*D;
+      let RA=toDeg(Math.atan2(Math.cos(toRad(e))*Math.sin(toRad(L)),Math.cos(toRad(L))))/15;
+      if(RA<0)RA+=24;
+      let decl=toDeg(Math.asin(Math.sin(toRad(e))*Math.sin(toRad(L))));
+      let EqT=q/15-RA;if(EqT>12)EqT-=24;
+      const tz=(new Date(date.toLocaleString("en-US",{timeZone:CONFIG.tz}))-new Date(date.toLocaleString("en-US",{timeZone:"UTC"})))/3600000;
+      let noon=12+tz-lng/15-EqT;
+      const ha=a=>{let c=(Math.sin(toRad(a))-Math.sin(toRad(lat))*Math.sin(toRad(decl)))/(Math.cos(toRad(lat))*Math.cos(toRad(decl)));return(c>1||c<-1)?NaN:toDeg(Math.acos(c))/15;};
+      let af=CONFIG.asrMethod===1?2:1;
+      let asrAlt=toDeg(Math.atan(1/(af+Math.tan(toRad(Math.abs(lat-decl))))));
+      return{fajr:noon-ha(-18),sunrise:noon-ha(-0.833),zawaal:noon,dhuhr:noon+2/60,asr:noon+ha(asrAlt),maghrib:noon+ha(-0.833),isha:noon+ha(-17)};
+    }
+
+    function fmt(h){if(isNaN(h))return"--:--";let hr=Math.floor(h),mn=Math.round((h-hr)*60);if(mn===60){hr++;mn=0;}let h12=hr%12||12;return`${h12}:${mn.toString().padStart(2,'0')}`;}
+    function fmt12(h){if(isNaN(h))return"--:--";let hr=Math.floor(h),mn=Math.round((h-hr)*60);if(mn===60){hr++;mn=0;}let ap=hr>=12?"PM":"AM",h12=hr%12||12;return`${h12}:${mn.toString().padStart(2,'0')} ${ap}`;}
+    function iqFmt(p,sd){if(CONFIG.iqamah[p]===null)return fmt12(sd);let[h,m]=CONFIG.iqamah[p];let ap=h>=12?"PM":"AM";return`${h%12||12}:${m.toString().padStart(2,'0')} ${ap}`;}
+    function iqShort(p,sd){if(CONFIG.iqamah[p]===null)return fmt(sd);let[h,m]=CONFIG.iqamah[p];return`${h%12||12}:${m.toString().padStart(2,'0')}`;}
+    function iqDec(p,sd){if(CONFIG.iqamah[p]===null)return sd;let[h,m]=CONFIG.iqamah[p];return h+m/60;}
+
+    function hijriAr(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(d)+' هـ';}catch(e){return'';}}
+
+    const salah=['fajr','dhuhr','asr','maghrib','isha'];
+    let today=null,tomorrow=null,lastDay='';
+
+    function update(){
+      const now=new Date(),day=now.toDateString();
+      if(day!==lastDay){
+        today=calcTimes(now);
+        const tmr=new Date(now);tmr.setDate(tmr.getDate()+1);
+        tomorrow=calcTimes(tmr);
+        lastDay=day;
+
+        document.getElementById('start-fajr').textContent=fmt(today.fajr);
+        document.getElementById('start-dhuhr').textContent=fmt(today.dhuhr);
+        document.getElementById('start-asr').textContent=fmt(today.asr);
+        document.getElementById('start-maghrib').textContent=fmt(today.maghrib);
+        document.getElementById('start-isha').textContent=fmt(today.isha);
+
+        document.getElementById('iq-fajr').textContent=iqShort('fajr',today.fajr);
+        document.getElementById('iq-dhuhr').textContent=iqShort('dhuhr',today.dhuhr);
+        document.getElementById('iq-asr').textContent=iqShort('asr',today.asr);
+        document.getElementById('iq-maghrib').textContent=iqShort('maghrib',today.maghrib);
+        document.getElementById('iq-isha').textContent=iqShort('isha',today.isha);
+
+        salah.forEach(p=>{
+          const t=fmt(today[p]),tm=fmt(tomorrow[p]);
+          document.getElementById(`tmr-s-${p}`).textContent=(t!==tm)?tm:'';
+        });
+        const ti=fmt(today.maghrib),tmi=fmt(tomorrow.maghrib);
+        document.getElementById('tmr-i-maghrib').textContent=(ti!==tmi)?tmi:'';
+
+        document.getElementById('sunrise').textContent=fmt(today.sunrise);
+        document.getElementById('ishraq').textContent=fmt(today.sunrise+CONFIG.ishraqOffset/60);
+        document.getElementById('zawaal').textContent=fmt(today.zawaal);
+
+        document.getElementById('gregDate').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+        document.getElementById('hijriDate').textContent=hijriAr(now);
+        document.getElementById('jum1').textContent=CONFIG.jumuah1;
+        document.getElementById('jum2').textContent=CONFIG.jumuah2;
+      }
+
+      const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+      document.getElementById('hours').textContent=h.toString().padStart(2,'0');
+      document.getElementById('mins').textContent=m.toString().padStart(2,'0');
+      document.getElementById('secs').textContent=s.toString().padStart(2,'0');
+
+      const cur=h+m/60+s/3600;
+      let next=null,nextT=null;
+      for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt){next=p;nextT=jt;break;}}
+      if(!next){next='fajr';nextT=iqDec('fajr',today.fajr)+24;}
+
+      const names={fajr:'Fajr',dhuhr:'Dhuhr',asr:'Asr',maghrib:'Maghrib',isha:'Isha'};
+      document.getElementById('nextName').textContent=names[next];
+      document.getElementById('nextTime').textContent=iqFmt(next,today[next]);
+      let diff=(nextT-cur)*60;if(diff<0)diff+=1440;
+      let ch=Math.floor(diff/60),cm=Math.floor(diff%60);
+      document.getElementById('countdown').textContent=`${ch}h ${cm.toString().padStart(2,'0')}m remaining`;
+
+      salah.forEach(p=>{
+        const row=document.getElementById(`row-${p}`);
+        row.classList.remove('active','passed','iqamah-soon');
+        if(p===next){row.classList.add('active');if(diff<=15)row.classList.add('iqamah-soon');}
+        else if(cur>=iqDec(p,today[p]))row.classList.add('passed');
+      });
+    }
+
+    update();
+    setInterval(update,1000);
+  </script>
+</body>
+</html>
