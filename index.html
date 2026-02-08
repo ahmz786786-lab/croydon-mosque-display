@@ -25,12 +25,13 @@
     /* ── HEADER ── */
     .header {
       background: #6E1E2C;
-      padding: 1.8vh 0;
+      padding: 1.5vh 0;
       text-align: center;
+      position: relative;
     }
 
     .header img {
-      height: 5.5vh;
+      height: 5vh;
       filter: brightness(0) invert(1);
     }
 
@@ -42,20 +43,22 @@
     }
 
     .clock {
-      font-size: 11vh;
+      font-size: 12vh;
       font-weight: 800;
       color: #FFFFFF;
       line-height: 1;
       letter-spacing: -1px;
+      font-variant-numeric: tabular-nums;
     }
 
     .date-row {
-      margin-top: 0.8vh;
+      margin-top: 1vh;
     }
 
     .gregorian-date {
       font-size: 2.8vh;
-      color: rgba(255,255,255,0.75);
+      color: rgba(255,255,255,0.8);
+      font-weight: 400;
     }
 
     .hijri-date {
@@ -63,7 +66,7 @@
       font-size: 3vh;
       color: #D4A843;
       font-weight: 700;
-      margin-top: 0.3vh;
+      margin-top: 0.4vh;
       direction: rtl;
     }
 
@@ -83,7 +86,7 @@
       background: #FFFFFF;
       border-radius: 1.5vh;
       overflow: hidden;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
       border: 1px solid #E8E2DA;
       min-height: 0;
     }
@@ -92,8 +95,9 @@
     .t-head {
       background: #6E1E2C;
       display: grid;
-      grid-template-columns: 2fr 1.3fr 1.3fr;
-      padding: 1.3vh 3.5vw;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      padding: 1.2vh 4vw;
+      align-items: center;
     }
 
     .t-head span {
@@ -104,15 +108,15 @@
       letter-spacing: 2px;
     }
 
-    .t-head span:first-child { padding-left: 0.5vw; }
+    .t-head span:first-child { text-align: left; }
     .t-head span:not(:first-child) { text-align: center; }
 
     /* Prayer rows */
     .p-row {
       display: grid;
-      grid-template-columns: 2fr 1.3fr 1.3fr;
+      grid-template-columns: 1.8fr 1fr 1fr;
       align-items: center;
-      padding: 0 3.5vw;
+      padding: 0 4vw;
       border-bottom: 1px solid #F0EBE4;
       flex: 1;
       min-height: 0;
@@ -134,8 +138,6 @@
       background: #D4A843;
     }
 
-    .p-row.passed { opacity: 1; }
-
     .p-name {
       font-size: 3.5vh;
       font-weight: 700;
@@ -144,16 +146,16 @@
       letter-spacing: 1px;
       display: flex;
       align-items: center;
-      gap: 1vw;
+      gap: 1.5vw;
     }
 
     .badge-next {
       display: none;
-      font-size: 1vh;
+      font-size: 1.1vh;
       font-weight: 800;
       color: #FFFFFF;
       background: #4CAF50;
-      padding: 0.2vh 0.7vw;
+      padding: 0.3vh 1vw;
       border-radius: 0.5vh;
       letter-spacing: 0.5px;
     }
@@ -165,12 +167,12 @@
     .p-start .main {
       font-size: 3.5vh;
       font-weight: 500;
-      color: #444;
+      color: #555;
       font-variant-numeric: tabular-nums;
     }
 
     .p-start .tomorrow {
-      font-size: 1.4vh;
+      font-size: 1.3vh;
       color: #D4843A;
       font-weight: 500;
     }
@@ -183,7 +185,7 @@
     }
 
     .p-iqamah .tomorrow {
-      font-size: 1.4vh;
+      font-size: 1.3vh;
       color: #D4843A;
       font-weight: 500;
     }
@@ -191,9 +193,9 @@
     /* ── JUMUAH ROW ── */
     .jumuah-row {
       display: grid;
-      grid-template-columns: 2fr 1.3fr 1.3fr;
+      grid-template-columns: 1.8fr 1fr 1fr;
       align-items: center;
-      padding: 0 3.5vw;
+      padding: 0 4vw;
       background: #FDFAF5;
       border-top: 2px solid #E8E2DA;
       flex: 1;
@@ -205,7 +207,7 @@
     .jum-col { text-align: center; }
 
     .jum-label {
-      font-size: 1.1vh;
+      font-size: 1.2vh;
       color: #999;
       font-weight: 600;
       text-transform: uppercase;
@@ -231,12 +233,12 @@
       text-align: center;
       background: #FFFFFF;
       border-radius: 1vh;
-      padding: 0.8vh 0;
+      padding: 1vh 0;
       border: 1px solid #E8E2DA;
     }
 
     .bottom-item .bl {
-      font-size: 1.3vh;
+      font-size: 1.4vh;
       font-weight: 700;
       color: #999;
       text-transform: uppercase;
@@ -244,7 +246,7 @@
     }
 
     .bottom-item .bv {
-      font-size: 2.2vh;
+      font-size: 2.5vh;
       font-weight: 700;
       color: #2C2C2C;
       font-variant-numeric: tabular-nums;
@@ -258,8 +260,10 @@
     }
 
     .footer-text {
-      font-size: 1.1vh;
-      color: rgba(255,255,255,0.35);
+      font-size: 1.2vh;
+      color: rgba(255,255,255,0.4);
+      font-weight: 500;
+      letter-spacing: 1px;
     }
 
     /* Pulse */
@@ -282,7 +286,6 @@
       padding: 0.5vh;
       z-index: 100;
     }
-    .header { position: relative; }
 
     /* ── SETTINGS MODAL ── */
     .settings-overlay {
