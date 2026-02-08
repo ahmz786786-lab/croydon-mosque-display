@@ -146,6 +146,7 @@
       letter-spacing: 2px;
     }
 
+    .t-head span:first-child { padding-left: 0.5vw; }
     .t-head span:not(:first-child) { text-align: center; }
 
     /* Prayer rows */
@@ -175,7 +176,7 @@
       background: #D4A843;
     }
 
-    .p-row.passed { opacity: 0.35; }
+    .p-row.passed { opacity: 1; }
 
     .p-name {
       font-size: 2.8vh;
@@ -207,6 +208,7 @@
       font-size: 2.8vh;
       font-weight: 500;
       color: #444;
+      font-variant-numeric: tabular-nums;
     }
 
     .p-start .tomorrow {
@@ -219,6 +221,7 @@
       font-size: 2.8vh;
       font-weight: 800;
       color: #6E1E2C;
+      font-variant-numeric: tabular-nums;
     }
 
     .p-iqamah .tomorrow {
@@ -235,7 +238,8 @@
       padding: 0 3.5vw;
       background: #FDFAF5;
       border-top: 2px solid #E8E2DA;
-      min-height: 5vh;
+      flex: 1;
+      min-height: 0;
     }
 
     .jumuah-row .p-name { color: #6E1E2C; }
@@ -243,16 +247,18 @@
     .jum-col { text-align: center; }
 
     .jum-label {
-      font-size: 1.2vh;
+      font-size: 1.1vh;
       color: #999;
       font-weight: 600;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .jum-val {
-      font-size: 2.2vh;
-      font-weight: 700;
-      color: #2C2C2C;
+      font-size: 2.8vh;
+      font-weight: 800;
+      color: #6E1E2C;
+      font-variant-numeric: tabular-nums;
     }
 
     /* ── BOTTOM: Sunrise / Ishraq / Zawaal ── */
@@ -283,6 +289,7 @@
       font-size: 2.2vh;
       font-weight: 600;
       color: #D4A843;
+      font-variant-numeric: tabular-nums;
     }
 
     /* ── FOOTER ── */
@@ -774,9 +781,8 @@
 
       salah.forEach(p=>{
         const row=document.getElementById(`row-${p}`);
-        row.classList.remove('active','passed','iqamah-soon');
+        row.classList.remove('active','iqamah-soon');
         if(p===next){row.classList.add('active');if(diff<=15)row.classList.add('iqamah-soon');}
-        else if(cur>=iqDec(p,today[p]))row.classList.add('passed');
       });
     }
 
