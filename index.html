@@ -650,6 +650,7 @@
           localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
           lastDay = '';
           update();
+          fetchFromWebsite();
         }
       })
       .subscribe((status) => {
@@ -886,8 +887,7 @@
 
     update();
     setInterval(update,1000);
-    fetchRemoteConfig();
-    fetchFromWebsite();
+    fetchRemoteConfig().then(() => fetchFromWebsite());
     setInterval(fetchFromWebsite, 3*60*60*1000);
 
     /* ── SETTINGS PANEL LOGIC ── */
