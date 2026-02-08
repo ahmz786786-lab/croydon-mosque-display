@@ -74,41 +74,6 @@
       direction: rtl;
     }
 
-    /* ── NEXT PRAYER BANNER ── */
-    .next-banner {
-      background: rgba(0,0,0,0.3);
-      margin: 0;
-      padding: 1.2vh 4vw;
-      text-align: center;
-      background: linear-gradient(135deg, #4D1120 0%, #3A0C16 100%);
-      border-bottom: 0.4vh solid #D4A843;
-    }
-
-    .next-banner .label {
-      font-size: 1.3vh;
-      font-weight: 600;
-      color: rgba(255,255,255,0.5);
-      text-transform: uppercase;
-      letter-spacing: 3px;
-    }
-
-    .next-banner .info {
-      font-size: 2.8vh;
-      font-weight: 700;
-      color: #FFFFFF;
-      margin-top: 0.2vh;
-    }
-
-    .next-banner .info .name {
-      color: #D4A843;
-    }
-
-    .next-banner .remaining {
-      font-size: 1.5vh;
-      color: rgba(255,255,255,0.45);
-      margin-top: 0.2vh;
-    }
-
     /* ── PRAYER TABLE ── */
     .prayer-table-wrap {
       flex: 1;
@@ -139,7 +104,7 @@
     }
 
     .t-head span {
-      font-size: 1.7vh;
+      font-size: 2vh;
       font-weight: 700;
       color: rgba(255,255,255,0.85);
       text-transform: uppercase;
@@ -179,7 +144,7 @@
     .p-row.passed { opacity: 1; }
 
     .p-name {
-      font-size: 2.8vh;
+      font-size: 3.5vh;
       font-weight: 700;
       color: #2C2C2C;
       text-transform: uppercase;
@@ -205,7 +170,7 @@
     .p-start, .p-iqamah { text-align: center; }
 
     .p-start .main {
-      font-size: 2.8vh;
+      font-size: 3.5vh;
       font-weight: 500;
       color: #444;
       font-variant-numeric: tabular-nums;
@@ -218,7 +183,7 @@
     }
 
     .p-iqamah .main {
-      font-size: 2.8vh;
+      font-size: 3.5vh;
       font-weight: 800;
       color: #6E1E2C;
       font-variant-numeric: tabular-nums;
@@ -255,7 +220,7 @@
     }
 
     .jum-val {
-      font-size: 2.8vh;
+      font-size: 3.5vh;
       font-weight: 800;
       color: #6E1E2C;
       font-variant-numeric: tabular-nums;
@@ -472,13 +437,6 @@
       <div class="gregorian-date" id="gregDate">Saturday 7 February 2026</div>
       <div class="hijri-date" id="hijriDate">١٨ شعبان ١٤٤٧ هـ</div>
     </div>
-  </div>
-
-  <!-- Next Prayer -->
-  <div class="next-banner">
-    <div class="label">Next Prayer</div>
-    <div class="info"><span class="name" id="nextName">Fajr</span> &mdash; <span id="nextTime">6:30 AM</span></div>
-    <div class="remaining" id="countdown">10h 12m remaining</div>
   </div>
 
   <!-- Prayer Table -->
@@ -824,12 +782,7 @@
       for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt){next=p;nextT=jt;break;}}
       if(!next){next='fajr';nextT=iqDec('fajr',today.fajr)+24;}
 
-      const names={fajr:'Fajr',dhuhr:'Dhuhr',asr:'Asr',maghrib:'Maghrib',isha:'Isha'};
-      document.getElementById('nextName').textContent=names[next];
-      document.getElementById('nextTime').textContent=iqFmt(next,today[next]);
       let diff=(nextT-cur)*60;if(diff<0)diff+=1440;
-      let ch=Math.floor(diff/60),cm=Math.floor(diff%60);
-      document.getElementById('countdown').textContent=`${ch}h ${cm.toString().padStart(2,'0')}m remaining`;
 
       salah.forEach(p=>{
         const row=document.getElementById(`row-${p}`);
