@@ -49,13 +49,6 @@
       letter-spacing: -1px;
     }
 
-    .clock .seconds {
-      font-size: 5vh;
-      font-weight: 400;
-      color: rgba(255,255,255,0.5);
-      vertical-align: super;
-    }
-
     .date-row {
       margin-top: 0.8vh;
     }
@@ -432,7 +425,7 @@
 
   <!-- Clock & Dates -->
   <div class="clock-section">
-    <div class="clock"><span id="hours">08</span>:<span id="mins">40</span><span class="seconds" id="secs">44</span></div>
+    <div class="clock"><span id="hours">08</span>:<span id="mins">40</span></div>
     <div class="date-row">
       <div class="gregorian-date" id="gregDate">Saturday 7 February 2026</div>
       <div class="hijri-date" id="hijriDate">١٨ شعبان ١٤٤٧ هـ</div>
@@ -770,11 +763,9 @@
         let h12=h%12||12;
         document.getElementById('hours').textContent=h12.toString();
         document.getElementById('mins').textContent=m.toString().padStart(2,'0');
-        document.getElementById('secs').textContent=(h>=12?'PM':'AM');
       } else {
         document.getElementById('hours').textContent=h.toString().padStart(2,'0');
         document.getElementById('mins').textContent=m.toString().padStart(2,'0');
-        document.getElementById('secs').textContent=s.toString().padStart(2,'0');
       }
 
       const cur=h+m/60+s/3600;
