@@ -664,6 +664,98 @@
       } catch(e){ console.error('Supabase save failed:', e); }
     }
 
+    /* ── Fetch prayer times from Croydon Mosque website ── */
+    let websiteTimes = null;
+    let websiteTmrTimes = null;
+
+    function parseCellTime(cell, isPM){
+      const clone = cell.cloneNode(true);
+      clone.querySelectorAll('input').forEach(i=>i.remove());
+      const txt = clone.textContent.trim().replace(/[^\d:]/g,'');
+      if(!txt) return null;
+      const [h,m] = txt.split(':').map(Number);
+      let hr = h;
+      if(isPM && hr < 12) hr += 12;
+      return hr + m/60;
+    }
+
+    function parseRow(row){
+      if(!row) return null;
+      const c = row.querySelectorAll('td');
+      if(c.length < 13) return null;
+      return {
+        fajr: parseCellTime(c[3],false),
+        fajrIq: parseCellTime(c[4],false),
+        sunrise: parseCellTime(c[5],false),
+        dhuhr: parseCellTime(c[6],true),
+        dhuhrIq: parseCellTime(c[7],true),
+        asr: parseCellTime(c[8],true),
+        asrIq: parseCellTime(c[9],true),
+        maghrib: parseCellTime(c[10],true),
+        isha: parseCellTime(c[11],true),
+        ishaIq: parseCellTime(c[12],true),
+      };
+    }
+
+    function decToArr(dec){
+      if(dec==null) return null;
+      let hr=Math.floor(dec), mn=Math.round((dec-hr)*60);
+      if(mn===60){hr++;mn=0;}
+      return [hr,mn];
+    }
+
+    async function fetchFromWebsite(){
+      try {
+        const url = 'https://api.allorigins.win/raw?url='+encodeURIComponent('https://www.croydonmosque.com/?section=prayer');
+        const resp = await fetch(url);
+        if(!resp.ok) throw new Error('Fetch failed');
+        const html = await resp.text();
+        const doc = new DOMParser().parseFromString(html,'text/html');
+
+        const todayRow = doc.querySelector('.rowToday');
+        if(!todayRow) throw new Error('Today row not found');
+
+        websiteTimes = parseRow(todayRow);
+        websiteTmrTimes = parseRow(todayRow.nextElementSibling);
+
+        if(websiteTimes){
+          CONFIG.manualStart = {
+            fajr: websiteTimes.fajr,
+            dhuhr: websiteTimes.dhuhr,
+            asr: websiteTimes.asr,
+            maghrib: websiteTimes.maghrib,
+            isha: websiteTimes.isha,
+          };
+          CONFIG.autoCalc = false;
+          CONFIG.iqamah.fajr = decToArr(websiteTimes.fajrIq);
+          if(websiteTimes.dhuhrIq) CONFIG.iqamah.dhuhr = decToArr(websiteTimes.dhuhrIq);
+          if(websiteTimes.asrIq) CONFIG.iqamah.asr = decToArr(websiteTimes.asrIq);
+          CONFIG.iqamah.maghrib = null;
+          if(websiteTimes.ishaIq) CONFIG.iqamah.isha = decToArr(websiteTimes.ishaIq);
+
+          // Parse Jumu'ah from sidebar
+          const sidebar = doc.querySelector('#prayer-time-wrapper table');
+          if(sidebar){
+            const rows = sidebar.querySelectorAll('tr');
+            rows.forEach(r=>{
+              const cells = r.querySelectorAll('td');
+              if(cells.length>=2){
+                const label = cells[0].textContent.trim().toLowerCase();
+                const val = cells[1].textContent.trim().replace(/\s*(am|pm)\s*/gi,'');
+                if(label.includes('juma 1') || label.includes('jumu')) CONFIG.jumuah1 = val;
+                if(label.includes('juma 2')) CONFIG.jumuah2 = val;
+              }
+            });
+          }
+
+          localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
+          lastDay = '';
+          update();
+          console.log('Prayer times updated from website:', websiteTimes);
+        }
+      } catch(e){ console.warn('Website fetch failed, using local times:', e); }
+    }
+
     const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
 
     function calcTimes(date) {
@@ -736,12 +828,22 @@
         document.getElementById('iq-maghrib').textContent=iqShort('maghrib',today.maghrib);
         document.getElementById('iq-isha').textContent=iqShort('isha',today.isha);
 
-        salah.forEach(p=>{
-          const t=fmt(today[p]),tm=fmt(tomorrow[p]);
-          document.getElementById(`tmr-s-${p}`).textContent=(t!==tm)?tm:'';
-        });
-        const ti=fmt(today.maghrib),tmi=fmt(tomorrow.maghrib);
-        document.getElementById('tmr-i-maghrib').textContent=(ti!==tmi)?tmi:'';
+        if(websiteTmrTimes){
+          const tmrMap={fajr:websiteTmrTimes.fajr,dhuhr:websiteTmrTimes.dhuhr,asr:websiteTmrTimes.asr,maghrib:websiteTmrTimes.maghrib,isha:websiteTmrTimes.isha};
+          salah.forEach(p=>{
+            const t=fmt(today[p]),tm=fmt(tmrMap[p]);
+            document.getElementById(`tmr-s-${p}`).textContent=(t!==tm)?tm:'';
+          });
+          const ti=fmt(today.maghrib),tmi=fmt(websiteTmrTimes.maghrib);
+          document.getElementById('tmr-i-maghrib').textContent=(ti!==tmi)?tmi:'';
+        } else {
+          salah.forEach(p=>{
+            const t=fmt(today[p]),tm=fmt(tomorrow[p]);
+            document.getElementById(`tmr-s-${p}`).textContent=(t!==tm)?tm:'';
+          });
+          const ti=fmt(today.maghrib),tmi=fmt(tomorrow.maghrib);
+          document.getElementById('tmr-i-maghrib').textContent=(ti!==tmi)?tmi:'';
+        }
 
         document.getElementById('sunrise').textContent=fmt(today.sunrise);
         document.getElementById('ishraq').textContent=fmt(today.sunrise+CONFIG.ishraqOffset/60);
@@ -785,6 +887,8 @@
     update();
     setInterval(update,1000);
     fetchRemoteConfig();
+    fetchFromWebsite();
+    setInterval(fetchFromWebsite, 3*60*60*1000);
 
     /* ── SETTINGS PANEL LOGIC ── */
     const overlay = document.getElementById('settingsOverlay');
