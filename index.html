@@ -428,7 +428,7 @@
     <div class="clock"><span id="hours">08</span>:<span id="mins">40</span></div>
     <div class="date-row">
       <div class="gregorian-date" id="gregDate">Saturday 7 February 2026</div>
-      <div class="hijri-date" id="hijriDate">١٨ شعبان ١٤٤٧ هـ</div>
+      <div class="hijri-date" id="hijriDate">١٨ شعبان ١٤٤٧</div>
     </div>
   </div>
 
@@ -703,7 +703,7 @@
       try{
         const adj = new Date(d);
         adj.setDate(adj.getDate() + (CONFIG.hijriAdjust||0));
-        return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(adj)+' هـ';
+        return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(adj);
       }catch(e){return'';}
     }
 
