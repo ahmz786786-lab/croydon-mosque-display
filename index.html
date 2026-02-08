@@ -945,6 +945,19 @@
         openSettings();
       }
     });
+
+    // Long-press footer to open settings (for mobile/touch devices)
+    let longPressTimer = null;
+    const footerEl = document.querySelector('.footer');
+    footerEl.addEventListener('touchstart', function(e){
+      longPressTimer = setTimeout(openSettings, 1500);
+    }, {passive: true});
+    footerEl.addEventListener('touchend', function(){
+      clearTimeout(longPressTimer);
+    });
+    footerEl.addEventListener('touchmove', function(){
+      clearTimeout(longPressTimer);
+    });
   </script>
 </body>
 </html>
