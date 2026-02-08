@@ -946,16 +946,16 @@
       }
     });
 
-    // Long-press footer to open settings (for mobile/touch devices)
+    // Long-press header to open settings (for mobile/touch devices)
     let longPressTimer = null;
-    const footerEl = document.querySelector('.footer');
-    footerEl.addEventListener('touchstart', function(e){
+    const headerEl = document.querySelector('.header');
+    headerEl.addEventListener('touchstart', function(e){
       longPressTimer = setTimeout(openSettings, 1500);
     }, {passive: true});
-    footerEl.addEventListener('touchend', function(){
+    headerEl.addEventListener('touchend', function(){
       clearTimeout(longPressTimer);
     });
-    footerEl.addEventListener('touchmove', function(){
+    headerEl.addEventListener('touchmove', function(){
       clearTimeout(longPressTimer);
     });
   </script>
