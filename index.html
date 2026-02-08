@@ -303,6 +303,135 @@
       50% { background: #FFF0D4; }
     }
     .p-row.iqamah-soon { animation: glow 2s ease-in-out infinite; }
+
+    /* ── SETTINGS MODAL ── */
+    .settings-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .settings-overlay.open { display: flex; }
+
+    .settings-panel {
+      background: #F2EDE7;
+      border-radius: 2vh;
+      width: 90vw;
+      max-width: 500px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    }
+
+    .settings-header {
+      background: #6E1E2C;
+      padding: 2vh 3vw;
+      border-radius: 2vh 2vh 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-header h2 {
+      color: #fff;
+      font-size: 2.5vh;
+      font-weight: 700;
+    }
+
+    .settings-close {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.6);
+      font-size: 3vh;
+      cursor: pointer;
+    }
+
+    .settings-body { padding: 2vh 3vw 1vh; }
+
+    .settings-section {
+      margin-bottom: 2vh;
+    }
+
+    .settings-section h3 {
+      font-size: 1.6vh;
+      font-weight: 700;
+      color: #6E1E2C;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 1vh;
+      border-bottom: 2px solid #D4A843;
+      padding-bottom: 0.5vh;
+    }
+
+    .s-field {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1vh;
+    }
+
+    .s-field label {
+      font-size: 1.6vh;
+      font-weight: 500;
+      color: #333;
+    }
+
+    .s-field input[type="time"],
+    .s-field input[type="text"],
+    .s-field input[type="number"],
+    .s-field select {
+      font-family: 'Inter', sans-serif;
+      font-size: 1.5vh;
+      padding: 0.6vh 1vw;
+      border: 1px solid #ccc;
+      border-radius: 0.8vh;
+      background: #fff;
+      color: #333;
+      width: 45%;
+    }
+
+    .s-field input[type="checkbox"] {
+      width: 2vh;
+      height: 2vh;
+      accent-color: #6E1E2C;
+    }
+
+    .settings-footer {
+      display: flex;
+      gap: 1.5vw;
+      padding: 1.5vh 3vw 2.5vh;
+    }
+
+    .btn-save, .btn-cancel, .btn-reset {
+      flex: 1;
+      padding: 1.2vh 0;
+      border: none;
+      border-radius: 1vh;
+      font-family: 'Inter', sans-serif;
+      font-size: 1.5vh;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-save {
+      background: #6E1E2C;
+      color: #fff;
+    }
+
+    .btn-cancel {
+      background: #E8E2DA;
+      color: #333;
+    }
+
+    .btn-reset {
+      background: #D4A843;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -388,15 +517,126 @@
     <div class="footer-text">Croydon Mosque & Islamic Centre</div>
   </div>
 
+  <!-- Settings Modal -->
+  <div class="settings-overlay" id="settingsOverlay">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button class="settings-close" id="settingsClose">&times;</button>
+      </div>
+      <div class="settings-body">
+
+        <div class="settings-section">
+          <h3>Prayer Start Times</h3>
+          <div class="s-field"><label>Auto-calculate from location</label><input type="checkbox" id="s-auto-calc" checked></div>
+          <div id="manual-start-fields">
+            <div class="s-field"><label>Fajr</label><input type="time" id="s-start-fajr"></div>
+            <div class="s-field"><label>Dhuhr</label><input type="time" id="s-start-dhuhr"></div>
+            <div class="s-field"><label>Asr</label><input type="time" id="s-start-asr"></div>
+            <div class="s-field"><label>Maghrib</label><input type="time" id="s-start-maghrib"></div>
+            <div class="s-field"><label>Isha</label><input type="time" id="s-start-isha"></div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Iqamah Times</h3>
+          <div class="s-field"><label>Fajr</label><input type="time" id="s-iq-fajr"></div>
+          <div class="s-field"><label>Dhuhr</label><input type="time" id="s-iq-dhuhr"></div>
+          <div class="s-field"><label>Asr</label><input type="time" id="s-iq-asr"></div>
+          <div class="s-field"><label>Maghrib (auto)</label><input type="checkbox" id="s-iq-maghrib-auto" checked></div>
+          <div class="s-field" id="s-iq-maghrib-field"><label>Maghrib</label><input type="time" id="s-iq-maghrib"></div>
+          <div class="s-field"><label>Isha</label><input type="time" id="s-iq-isha"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Jumu'ah Times</h3>
+          <div class="s-field"><label>1st Jumu'ah</label><input type="time" id="s-jum1"></div>
+          <div class="s-field"><label>2nd Jumu'ah</label><input type="time" id="s-jum2"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Date & Time Display</h3>
+          <div class="s-field"><label>Clock format</label>
+            <select id="s-clock-format">
+              <option value="24">24-hour</option>
+              <option value="12">12-hour</option>
+            </select>
+          </div>
+          <div class="s-field"><label>Date format</label>
+            <select id="s-date-format">
+              <option value="long">Saturday 7 February 2026</option>
+              <option value="short">7 Feb 2026</option>
+              <option value="numeric">07/02/2026</option>
+            </select>
+          </div>
+          <div class="s-field"><label>Show Hijri date</label><input type="checkbox" id="s-show-hijri" checked></div>
+          <div class="s-field"><label>Hijri date adjust (days)</label><input type="number" id="s-hijri-adjust" min="-2" max="2" value="0"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Location</h3>
+          <div class="s-field"><label>Latitude</label><input type="number" id="s-lat" step="0.0001"></div>
+          <div class="s-field"><label>Longitude</label><input type="number" id="s-lng" step="0.0001"></div>
+          <div class="s-field"><label>Timezone</label><input type="text" id="s-tz"></div>
+          <div class="s-field"><label>Asr method</label>
+            <select id="s-asr-method">
+              <option value="0">Standard</option>
+              <option value="1">Hanafi</option>
+            </select>
+          </div>
+          <div class="s-field"><label>Ishraq offset (min)</label><input type="number" id="s-ishraq-offset" min="0" max="30"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Display</h3>
+          <div class="s-field"><label>Mosque name</label><input type="text" id="s-mosque-name"></div>
+        </div>
+
+      </div>
+      <div class="settings-footer">
+        <button class="btn-save" id="btnSave">Save</button>
+        <button class="btn-cancel" id="btnCancel">Cancel</button>
+        <button class="btn-reset" id="btnReset">Reset</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const CONFIG = {
-      iqamah: {
-        fajr: [6,30], dhuhr: [13,30], asr: [16,0], maghrib: null, isha: [20,0],
-      },
+    /* ── DEFAULT CONFIG ── */
+    const DEFAULT_CONFIG = {
+      iqamah: { fajr: [6,30], dhuhr: [13,30], asr: [16,0], maghrib: null, isha: [20,0] },
+      manualStart: null,
+      autoCalc: true,
       jumuah1: "12:25", jumuah2: "1:25",
       ishraqOffset: 15,
       lat: 51.3762, lng: -0.0986, tz: "Europe/London", asrMethod: 0,
+      clockFormat: 24,
+      dateFormat: "long",
+      showHijri: true,
+      hijriAdjust: 0,
+      mosqueName: "Croydon Mosque & Islamic Centre",
     };
+
+    function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+    function loadConfig(){
+      try {
+        const saved = localStorage.getItem('mosqueConfig');
+        if(saved){
+          const s = JSON.parse(saved);
+          const c = deepClone(DEFAULT_CONFIG);
+          Object.keys(s).forEach(k => {
+            if(k === 'iqamah') Object.assign(c.iqamah, s.iqamah);
+            else if(k === 'manualStart' && s.manualStart) c.manualStart = s.manualStart;
+            else c[k] = s[k];
+          });
+          return c;
+        }
+      } catch(e){}
+      return deepClone(DEFAULT_CONFIG);
+    }
+
+    const CONFIG = loadConfig();
 
     const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
 
@@ -417,7 +657,14 @@
       const ha=a=>{let c=(Math.sin(toRad(a))-Math.sin(toRad(lat))*Math.sin(toRad(decl)))/(Math.cos(toRad(lat))*Math.cos(toRad(decl)));return(c>1||c<-1)?NaN:toDeg(Math.acos(c))/15;};
       let af=CONFIG.asrMethod===1?2:1;
       let asrAlt=toDeg(Math.atan(1/(af+Math.tan(toRad(Math.abs(lat-decl))))));
-      return{fajr:noon-ha(-18),sunrise:noon-ha(-0.833),zawaal:noon,dhuhr:noon+2/60,asr:noon+ha(asrAlt),maghrib:noon+ha(-0.833),isha:noon+ha(-17)};
+      let times={fajr:noon-ha(-18),sunrise:noon-ha(-0.833),zawaal:noon,dhuhr:noon+2/60,asr:noon+ha(asrAlt),maghrib:noon+ha(-0.833),isha:noon+ha(-17)};
+
+      if(!CONFIG.autoCalc && CONFIG.manualStart){
+        ['fajr','dhuhr','asr','maghrib','isha'].forEach(p=>{
+          if(CONFIG.manualStart[p]!=null) times[p]=CONFIG.manualStart[p];
+        });
+      }
+      return times;
     }
 
     function fmt(h){if(isNaN(h))return"--:--";let hr=Math.floor(h),mn=Math.round((h-hr)*60);if(mn===60){hr++;mn=0;}let h12=hr%12||12;return`${h12}:${mn.toString().padStart(2,'0')}`;}
@@ -426,7 +673,19 @@
     function iqShort(p,sd){if(CONFIG.iqamah[p]===null)return fmt(sd);let[h,m]=CONFIG.iqamah[p];return`${h%12||12}:${m.toString().padStart(2,'0')}`;}
     function iqDec(p,sd){if(CONFIG.iqamah[p]===null)return sd;let[h,m]=CONFIG.iqamah[p];return h+m/60;}
 
-    function hijriAr(d){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(d)+' هـ';}catch(e){return'';}}
+    function hijriAr(d){
+      try{
+        const adj = new Date(d);
+        adj.setDate(adj.getDate() + (CONFIG.hijriAdjust||0));
+        return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(adj)+' هـ';
+      }catch(e){return'';}
+    }
+
+    function formatGregorian(now){
+      if(CONFIG.dateFormat==='short') return now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      if(CONFIG.dateFormat==='numeric') return now.toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'numeric'});
+      return now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    }
 
     const salah=['fajr','dhuhr','asr','maghrib','isha'];
     let today=null,tomorrow=null,lastDay='';
@@ -462,16 +721,28 @@
         document.getElementById('ishraq').textContent=fmt(today.sunrise+CONFIG.ishraqOffset/60);
         document.getElementById('zawaal').textContent=fmt(today.zawaal);
 
-        document.getElementById('gregDate').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-        document.getElementById('hijriDate').textContent=hijriAr(now);
+        document.getElementById('gregDate').textContent=formatGregorian(now);
+        const hijriEl = document.getElementById('hijriDate');
+        if(CONFIG.showHijri){ hijriEl.style.display=''; hijriEl.textContent=hijriAr(now); }
+        else { hijriEl.style.display='none'; }
+
         document.getElementById('jum1').textContent=CONFIG.jumuah1;
         document.getElementById('jum2').textContent=CONFIG.jumuah2;
+
+        document.querySelector('.footer-text').textContent=CONFIG.mosqueName;
       }
 
       const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
-      document.getElementById('hours').textContent=h.toString().padStart(2,'0');
-      document.getElementById('mins').textContent=m.toString().padStart(2,'0');
-      document.getElementById('secs').textContent=s.toString().padStart(2,'0');
+      if(CONFIG.clockFormat===12){
+        let h12=h%12||12;
+        document.getElementById('hours').textContent=h12.toString();
+        document.getElementById('mins').textContent=m.toString().padStart(2,'0');
+        document.getElementById('secs').textContent=(h>=12?'PM':'AM');
+      } else {
+        document.getElementById('hours').textContent=h.toString().padStart(2,'0');
+        document.getElementById('mins').textContent=m.toString().padStart(2,'0');
+        document.getElementById('secs').textContent=s.toString().padStart(2,'0');
+      }
 
       const cur=h+m/60+s/3600;
       let next=null,nextT=null;
@@ -495,6 +766,185 @@
 
     update();
     setInterval(update,1000);
+
+    /* ── SETTINGS PANEL LOGIC ── */
+    const overlay = document.getElementById('settingsOverlay');
+
+    function decToTime(dec){
+      if(dec==null||isNaN(dec)) return '';
+      let hr=Math.floor(dec), mn=Math.round((dec-hr)*60);
+      if(mn===60){hr++;mn=0;}
+      return hr.toString().padStart(2,'0')+':'+mn.toString().padStart(2,'0');
+    }
+    function timeToArr(val){
+      if(!val) return null;
+      const [h,m]=val.split(':').map(Number);
+      return [h,m];
+    }
+    function timeToDec(val){
+      if(!val) return null;
+      const [h,m]=val.split(':').map(Number);
+      return h+m/60;
+    }
+    function arrToTime(arr){
+      if(!arr) return '';
+      return arr[0].toString().padStart(2,'0')+':'+arr[1].toString().padStart(2,'0');
+    }
+    function timeStr12(val){
+      if(!val) return '';
+      const [h,m]=val.split(':').map(Number);
+      let h12=h%12||12;
+      return h12+':'+m.toString().padStart(2,'0');
+    }
+
+    function openSettings(){
+      // Populate form with current CONFIG
+      document.getElementById('s-auto-calc').checked = CONFIG.autoCalc;
+      const mf = document.getElementById('manual-start-fields');
+      mf.style.display = CONFIG.autoCalc ? 'none' : '';
+
+      if(CONFIG.manualStart){
+        salah.forEach(p=>{
+          document.getElementById('s-start-'+p).value = decToTime(CONFIG.manualStart[p]);
+        });
+      } else {
+        salah.forEach(p=>{
+          document.getElementById('s-start-'+p).value = today ? decToTime(today[p]) : '';
+        });
+      }
+
+      document.getElementById('s-iq-fajr').value = arrToTime(CONFIG.iqamah.fajr);
+      document.getElementById('s-iq-dhuhr').value = arrToTime(CONFIG.iqamah.dhuhr);
+      document.getElementById('s-iq-asr').value = arrToTime(CONFIG.iqamah.asr);
+      document.getElementById('s-iq-isha').value = arrToTime(CONFIG.iqamah.isha);
+
+      const magAuto = CONFIG.iqamah.maghrib === null;
+      document.getElementById('s-iq-maghrib-auto').checked = magAuto;
+      document.getElementById('s-iq-maghrib-field').style.display = magAuto ? 'none' : '';
+      document.getElementById('s-iq-maghrib').value = magAuto ? '' : arrToTime(CONFIG.iqamah.maghrib);
+
+      document.getElementById('s-jum1').value = parseJumuahToTime(CONFIG.jumuah1);
+      document.getElementById('s-jum2').value = parseJumuahToTime(CONFIG.jumuah2);
+
+      document.getElementById('s-clock-format').value = CONFIG.clockFormat;
+      document.getElementById('s-date-format').value = CONFIG.dateFormat;
+      document.getElementById('s-show-hijri').checked = CONFIG.showHijri;
+      document.getElementById('s-hijri-adjust').value = CONFIG.hijriAdjust;
+
+      document.getElementById('s-lat').value = CONFIG.lat;
+      document.getElementById('s-lng').value = CONFIG.lng;
+      document.getElementById('s-tz').value = CONFIG.tz;
+      document.getElementById('s-asr-method').value = CONFIG.asrMethod;
+      document.getElementById('s-ishraq-offset').value = CONFIG.ishraqOffset;
+      document.getElementById('s-mosque-name').value = CONFIG.mosqueName;
+
+      overlay.classList.add('open');
+    }
+
+    function parseJumuahToTime(str){
+      if(!str) return '';
+      let parts = str.replace(/\s*(AM|PM)\s*/i,'').split(':');
+      let h = parseInt(parts[0]), m = parseInt(parts[1]||'0');
+      if(h<8) h+=12; // assume PM for small numbers like "1:25"
+      return h.toString().padStart(2,'0')+':'+m.toString().padStart(2,'0');
+    }
+
+    function timeToJumuah(val){
+      if(!val) return '';
+      const [h,m] = val.split(':').map(Number);
+      let h12 = h%12||12;
+      return h12+':'+m.toString().padStart(2,'0');
+    }
+
+    function closeSettings(){ overlay.classList.remove('open'); }
+
+    function saveSettings(){
+      CONFIG.autoCalc = document.getElementById('s-auto-calc').checked;
+
+      if(!CONFIG.autoCalc){
+        CONFIG.manualStart = {};
+        salah.forEach(p=>{
+          const v = document.getElementById('s-start-'+p).value;
+          CONFIG.manualStart[p] = v ? timeToDec(v) : null;
+        });
+      } else {
+        CONFIG.manualStart = null;
+      }
+
+      CONFIG.iqamah.fajr = timeToArr(document.getElementById('s-iq-fajr').value);
+      CONFIG.iqamah.dhuhr = timeToArr(document.getElementById('s-iq-dhuhr').value);
+      CONFIG.iqamah.asr = timeToArr(document.getElementById('s-iq-asr').value);
+      CONFIG.iqamah.isha = timeToArr(document.getElementById('s-iq-isha').value);
+
+      if(document.getElementById('s-iq-maghrib-auto').checked){
+        CONFIG.iqamah.maghrib = null;
+      } else {
+        CONFIG.iqamah.maghrib = timeToArr(document.getElementById('s-iq-maghrib').value);
+      }
+
+      CONFIG.jumuah1 = timeToJumuah(document.getElementById('s-jum1').value);
+      CONFIG.jumuah2 = timeToJumuah(document.getElementById('s-jum2').value);
+
+      CONFIG.clockFormat = parseInt(document.getElementById('s-clock-format').value);
+      CONFIG.dateFormat = document.getElementById('s-date-format').value;
+      CONFIG.showHijri = document.getElementById('s-show-hijri').checked;
+      CONFIG.hijriAdjust = parseInt(document.getElementById('s-hijri-adjust').value)||0;
+
+      CONFIG.lat = parseFloat(document.getElementById('s-lat').value);
+      CONFIG.lng = parseFloat(document.getElementById('s-lng').value);
+      CONFIG.tz = document.getElementById('s-tz').value;
+      CONFIG.asrMethod = parseInt(document.getElementById('s-asr-method').value);
+      CONFIG.ishraqOffset = parseInt(document.getElementById('s-ishraq-offset').value)||15;
+      CONFIG.mosqueName = document.getElementById('s-mosque-name').value || DEFAULT_CONFIG.mosqueName;
+
+      localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
+      lastDay = '';
+      closeSettings();
+      update();
+    }
+
+    function resetSettings(){
+      localStorage.removeItem('mosqueConfig');
+      Object.assign(CONFIG, deepClone(DEFAULT_CONFIG));
+      CONFIG.iqamah = deepClone(DEFAULT_CONFIG.iqamah);
+      lastDay = '';
+      closeSettings();
+      update();
+    }
+
+    // Toggle manual start fields visibility
+    document.getElementById('s-auto-calc').addEventListener('change', function(){
+      document.getElementById('manual-start-fields').style.display = this.checked ? 'none' : '';
+    });
+
+    // Toggle maghrib iqamah field visibility
+    document.getElementById('s-iq-maghrib-auto').addEventListener('change', function(){
+      document.getElementById('s-iq-maghrib-field').style.display = this.checked ? 'none' : '';
+    });
+
+    // Button handlers
+    document.getElementById('btnSave').addEventListener('click', saveSettings);
+    document.getElementById('btnCancel').addEventListener('click', closeSettings);
+    document.getElementById('settingsClose').addEventListener('click', closeSettings);
+    document.getElementById('btnReset').addEventListener('click', resetSettings);
+
+    // Click outside to close
+    overlay.addEventListener('click', function(e){
+      if(e.target === overlay) closeSettings();
+    });
+
+    // Keyboard: S to open, Escape to close
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && overlay.classList.contains('open')){
+        closeSettings();
+        return;
+      }
+      if((e.key === 's' || e.key === 'S') && !overlay.classList.contains('open')){
+        const tag = document.activeElement.tagName;
+        if(tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        openSettings();
+      }
+    });
   </script>
 </body>
 </html>
