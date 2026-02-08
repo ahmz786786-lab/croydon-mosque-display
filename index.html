@@ -304,6 +304,21 @@
     }
     .p-row.iqamah-soon { animation: glow 2s ease-in-out infinite; }
 
+    /* ── SETTINGS GEAR BUTTON ── */
+    .settings-gear {
+      position: absolute;
+      top: 1.2vh;
+      right: 2vw;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.25);
+      font-size: 2.5vh;
+      cursor: pointer;
+      padding: 0.5vh;
+      z-index: 100;
+    }
+    .header { position: relative; }
+
     /* ── SETTINGS MODAL ── */
     .settings-overlay {
       display: none;
@@ -439,6 +454,7 @@
   <!-- Header -->
   <div class="header">
     <img src="logo.png" alt="Croydon Mosque & Islamic Centre">
+    <button class="settings-gear" id="settingsGear">&#9881;</button>
   </div>
 
   <!-- Clock & Dates -->
@@ -946,18 +962,8 @@
       }
     });
 
-    // Long-press header to open settings (for mobile/touch devices)
-    let longPressTimer = null;
-    const headerEl = document.querySelector('.header');
-    headerEl.addEventListener('touchstart', function(e){
-      longPressTimer = setTimeout(openSettings, 1500);
-    }, {passive: true});
-    headerEl.addEventListener('touchend', function(){
-      clearTimeout(longPressTimer);
-    });
-    headerEl.addEventListener('touchmove', function(){
-      clearTimeout(longPressTimer);
-    });
+    // Gear button to open settings (works on mobile and desktop)
+    document.getElementById('settingsGear').addEventListener('click', openSettings);
   </script>
 </body>
 </html>
