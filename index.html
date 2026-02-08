@@ -455,6 +455,7 @@
       color: #fff;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -625,6 +626,11 @@
   </div>
 
   <script>
+    /* ── SUPABASE ── */
+    const SUPABASE_URL = 'https://ivcnzmuuaxvdyepimlgj.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2Y256bXV1YXh2ZHllcGltbGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NTk4MDgsImV4cCI6MjA4NjEzNTgwOH0.z3xAZ-nIuJdJAJIvY1WZ0XksGJV455c4EycWHyqD7fI';
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     /* ── DEFAULT CONFIG ── */
     const DEFAULT_CONFIG = {
       iqamah: { fajr: [6,30], dhuhr: [13,30], asr: [16,0], maghrib: null, isha: [20,0] },
@@ -642,24 +648,70 @@
 
     function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
 
+    function mergeConfig(s){
+      const c = deepClone(DEFAULT_CONFIG);
+      Object.keys(s).forEach(k => {
+        if(k === 'iqamah') Object.assign(c.iqamah, s.iqamah);
+        else if(k === 'manualStart' && s.manualStart) c.manualStart = s.manualStart;
+        else c[k] = s[k];
+      });
+      return c;
+    }
+
     function loadConfig(){
       try {
         const saved = localStorage.getItem('mosqueConfig');
-        if(saved){
-          const s = JSON.parse(saved);
-          const c = deepClone(DEFAULT_CONFIG);
-          Object.keys(s).forEach(k => {
-            if(k === 'iqamah') Object.assign(c.iqamah, s.iqamah);
-            else if(k === 'manualStart' && s.manualStart) c.manualStart = s.manualStart;
-            else c[k] = s[k];
-          });
-          return c;
-        }
+        if(saved) return mergeConfig(JSON.parse(saved));
       } catch(e){}
       return deepClone(DEFAULT_CONFIG);
     }
 
     const CONFIG = loadConfig();
+
+    /* ── Supabase: fetch remote config on startup ── */
+    async function fetchRemoteConfig(){
+      try {
+        const { data, error } = await sb.from('mosque_config').select('config').eq('id', 1).single();
+        if(error) { console.error('Supabase fetch error:', error); return; }
+        if(!data) { console.warn('No config row found in Supabase'); return; }
+        console.log('Fetched remote config:', data.config);
+        const remote = data.config;
+        if(remote && Object.keys(remote).length > 0){
+          const merged = mergeConfig(remote);
+          Object.assign(CONFIG, merged);
+          CONFIG.iqamah = merged.iqamah;
+          localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
+          lastDay = '';
+          update();
+        }
+      } catch(e){ console.error('Supabase fetch failed:', e); }
+    }
+
+    /* ── Supabase: real-time subscription ── */
+    sb.channel('mosque-config-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'mosque_config' }, (payload) => {
+        console.log('Realtime update received:', payload);
+        const remote = payload.new.config;
+        if(remote && Object.keys(remote).length > 0){
+          const merged = mergeConfig(remote);
+          Object.assign(CONFIG, merged);
+          CONFIG.iqamah = merged.iqamah;
+          localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
+          lastDay = '';
+          update();
+        }
+      })
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
+
+    async function saveToSupabase(config){
+      try {
+        const { data, error } = await sb.from('mosque_config').upsert({ id: 1, config: config, updated_at: new Date().toISOString() });
+        if(error) console.error('Supabase save error:', error);
+        else console.log('Saved to Supabase successfully');
+      } catch(e){ console.error('Supabase save failed:', e); }
+    }
 
     const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
 
@@ -788,6 +840,7 @@
 
     update();
     setInterval(update,1000);
+    fetchRemoteConfig();
 
     /* ── SETTINGS PANEL LOGIC ── */
     const overlay = document.getElementById('settingsOverlay');
@@ -920,6 +973,7 @@
       CONFIG.mosqueName = document.getElementById('s-mosque-name').value || DEFAULT_CONFIG.mosqueName;
 
       localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
+      saveToSupabase(JSON.parse(JSON.stringify(CONFIG)));
       lastDay = '';
       closeSettings();
       update();
@@ -929,6 +983,7 @@
       localStorage.removeItem('mosqueConfig');
       Object.assign(CONFIG, deepClone(DEFAULT_CONFIG));
       CONFIG.iqamah = deepClone(DEFAULT_CONFIG.iqamah);
+      saveToSupabase({});
       lastDay = '';
       closeSettings();
       update();
