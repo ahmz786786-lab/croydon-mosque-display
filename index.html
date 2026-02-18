@@ -171,7 +171,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .p-start .tomorrow { display: none; }
+    .p-start .tomorrow { display: none; font-size: 1.8vh; color: #999; font-weight: 400; }
 
     .p-iqamah .main {
       font-size: 3.5vh;
@@ -180,7 +180,7 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .p-iqamah .tomorrow { display: none; }
+    .p-iqamah .tomorrow { display: none; font-size: 1.8vh; color: #999; font-weight: 400; }
 
     /* ── JUMUAH ROW ── */
     .jumuah-row {
@@ -849,8 +849,14 @@
           const passed = cur >= todIqMap[p] + 15/60;
           const todStart=fmt(today[p]), tmrStart=fmt(tmrAPI[p]);
           const todIq=iqShort(p,today[p]), tmrIq=fmt(tmrIqMap[p]);
-          document.getElementById(`tmr-s-${p}`).textContent=(passed && todStart!==tmrStart)?tmrStart:'';
-          document.getElementById(`tmr-i-${p}`).textContent=(passed && todIq!==tmrIq)?tmrIq:'';
+          const sEl=document.getElementById(`tmr-s-${p}`);
+          const iEl=document.getElementById(`tmr-i-${p}`);
+          const showStart = passed && todStart!==tmrStart;
+          const showIq = passed && todIq!==tmrIq;
+          sEl.textContent = showStart ? tmrStart : '';
+          sEl.style.display = showStart ? 'block' : 'none';
+          iEl.textContent = showIq ? tmrIq : '';
+          iEl.style.display = showIq ? 'block' : 'none';
         });
       }
     }
