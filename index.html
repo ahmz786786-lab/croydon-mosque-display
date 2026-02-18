@@ -701,63 +701,55 @@
     }
 
     async function fetchFromWebsite(){
-      const sources = [
-        'https://croydonmosque.com/indexold.php?section=prayer',
-        'https://www.croydonmosque.com/?section=prayer',
-      ];
-      for(const src of sources){
-        try {
-          const url = 'https://api.allorigins.win/raw?url='+encodeURIComponent(src);
-          const resp = await fetch(url);
-          if(!resp.ok) throw new Error('Fetch failed for '+src);
-          const html = await resp.text();
-          const doc = new DOMParser().parseFromString(html,'text/html');
+      try {
+        const url = 'https://api.allorigins.win/raw?url='+encodeURIComponent('https://www.croydonmosque.com/?section=prayer');
+        const resp = await fetch(url);
+        if(!resp.ok) throw new Error('Fetch failed');
+        const html = await resp.text();
+        const doc = new DOMParser().parseFromString(html,'text/html');
 
-          const todayRow = doc.querySelector('.rowToday');
-          if(!todayRow) throw new Error('Today row not found on '+src);
+        const todayRow = doc.querySelector('.rowToday');
+        if(!todayRow) throw new Error('Today row not found');
 
-          websiteTimes = parseRow(todayRow);
-          websiteTmrTimes = parseRow(todayRow.nextElementSibling);
+        websiteTimes = parseRow(todayRow);
+        websiteTmrTimes = parseRow(todayRow.nextElementSibling);
 
-          if(websiteTimes){
-            CONFIG.manualStart = {
-              fajr: websiteTimes.fajr,
-              dhuhr: websiteTimes.dhuhr,
-              asr: websiteTimes.asr,
-              maghrib: websiteTimes.maghrib,
-              isha: websiteTimes.isha,
-            };
-            CONFIG.autoCalc = false;
-            CONFIG.iqamah.fajr = decToArr(websiteTimes.fajrIq);
-            if(websiteTimes.dhuhrIq) CONFIG.iqamah.dhuhr = decToArr(websiteTimes.dhuhrIq);
-            if(websiteTimes.asrIq) CONFIG.iqamah.asr = decToArr(websiteTimes.asrIq);
-            CONFIG.iqamah.maghrib = null;
-            if(websiteTimes.ishaIq) CONFIG.iqamah.isha = decToArr(websiteTimes.ishaIq);
+        if(websiteTimes){
+          CONFIG.manualStart = {
+            fajr: websiteTimes.fajr,
+            dhuhr: websiteTimes.dhuhr,
+            asr: websiteTimes.asr,
+            maghrib: websiteTimes.maghrib,
+            isha: websiteTimes.isha,
+          };
+          CONFIG.autoCalc = false;
+          CONFIG.iqamah.fajr = decToArr(websiteTimes.fajrIq);
+          if(websiteTimes.dhuhrIq) CONFIG.iqamah.dhuhr = decToArr(websiteTimes.dhuhrIq);
+          if(websiteTimes.asrIq) CONFIG.iqamah.asr = decToArr(websiteTimes.asrIq);
+          CONFIG.iqamah.maghrib = null;
+          if(websiteTimes.ishaIq) CONFIG.iqamah.isha = decToArr(websiteTimes.ishaIq);
 
-            // Parse Jumu'ah from sidebar
-            const sidebar = doc.querySelector('#prayer-time-wrapper table');
-            if(sidebar){
-              const rows = sidebar.querySelectorAll('tr');
-              rows.forEach(r=>{
-                const cells = r.querySelectorAll('td');
-                if(cells.length>=2){
-                  const label = cells[0].textContent.trim().toLowerCase();
-                  const val = cells[1].textContent.trim().replace(/\s*(am|pm)\s*/gi,'');
-                  if(label.includes('juma 1') || label.includes('jumu')) CONFIG.jumuah1 = val;
-                  if(label.includes('juma 2')) CONFIG.jumuah2 = val;
-                }
-              });
-            }
-
-            localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
-            lastDay = '';
-            update();
-            console.log('Prayer times updated from website ('+src+'):', websiteTimes);
-            return; // success — stop trying other sources
+          // Parse Jumu'ah from sidebar
+          const sidebar = doc.querySelector('#prayer-time-wrapper table');
+          if(sidebar){
+            const rows = sidebar.querySelectorAll('tr');
+            rows.forEach(r=>{
+              const cells = r.querySelectorAll('td');
+              if(cells.length>=2){
+                const label = cells[0].textContent.trim().toLowerCase();
+                const val = cells[1].textContent.trim().replace(/\s*(am|pm)\s*/gi,'');
+                if(label.includes('juma 1') || label.includes('jumu')) CONFIG.jumuah1 = val;
+                if(label.includes('juma 2')) CONFIG.jumuah2 = val;
+              }
+            });
           }
-        } catch(e){ console.warn('Source failed: '+src, e); }
-      }
-      console.warn('All website sources failed, using local/calculated times');
+
+          localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
+          lastDay = '';
+          update();
+          console.log('Prayer times updated from website:', websiteTimes);
+        }
+      } catch(e){ console.warn('Website fetch failed, using local times:', e); }
     }
 
     const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
