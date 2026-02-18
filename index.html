@@ -787,9 +787,11 @@
     function iqShort(p,sd){if(CONFIG.iqamah[p]===null)return fmt(sd);let[h,m]=CONFIG.iqamah[p];return`${h%12||12}:${m.toString().padStart(2,'0')}`;}
     function iqDec(p,sd){if(CONFIG.iqamah[p]===null)return sd;let[h,m]=CONFIG.iqamah[p];return h+m/60;}
 
-    function hijriAr(d){
+    function hijriAr(d, maghribDec){
       try{
         const adj = new Date(d);
+        const now = adj.getHours() + adj.getMinutes()/60;
+        if(maghribDec && now >= maghribDec) adj.setDate(adj.getDate() + 1);
         adj.setDate(adj.getDate() + (CONFIG.hijriAdjust||0));
         return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',{day:'numeric',month:'long',year:'numeric'}).format(adj);
       }catch(e){return'';}
@@ -847,7 +849,7 @@
 
         document.getElementById('gregDate').textContent=formatGregorian(now);
         const hijriEl = document.getElementById('hijriDate');
-        if(CONFIG.showHijri){ hijriEl.style.display=''; hijriEl.textContent=hijriAr(now); }
+        if(CONFIG.showHijri){ hijriEl.style.display=''; hijriEl.textContent=hijriAr(now, today.maghrib); }
         else { hijriEl.style.display='none'; }
 
         document.getElementById('jum1').textContent=CONFIG.jumuah1;
