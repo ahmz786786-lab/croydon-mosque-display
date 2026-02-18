@@ -697,16 +697,37 @@
         todayAPI = parseAPIData(await todayResp.json());
         tmrAPI = parseAPIData(await tmrResp.json());
 
+        // API sets start times (change daily with sun position)
         CONFIG.manualStart = {
           fajr: todayAPI.fajr, dhuhr: todayAPI.dhuhr,
           asr: todayAPI.asr, maghrib: todayAPI.maghrib, isha: todayAPI.isha,
         };
         CONFIG.autoCalc = false;
-        CONFIG.iqamah.fajr = decToArr(todayAPI.fajrIq);
-        CONFIG.iqamah.dhuhr = decToArr(todayAPI.dhuhrIq);
-        CONFIG.iqamah.asr = decToArr(todayAPI.asrIq);
-        CONFIG.iqamah.maghrib = null;
-        CONFIG.iqamah.isha = decToArr(todayAPI.ishaIq);
+
+        // Iqamah: use Supabase/admin config if available, otherwise use API
+        try {
+          const { data } = await sb.from('mosque_config').select('config').eq('id', 1).single();
+          if(data && data.config && data.config.iqamah){
+            const ri = data.config.iqamah;
+            CONFIG.iqamah.fajr = ri.fajr || decToArr(todayAPI.fajrIq);
+            CONFIG.iqamah.dhuhr = ri.dhuhr || decToArr(todayAPI.dhuhrIq);
+            CONFIG.iqamah.asr = ri.asr || decToArr(todayAPI.asrIq);
+            CONFIG.iqamah.maghrib = ri.maghrib || null;
+            CONFIG.iqamah.isha = ri.isha || decToArr(todayAPI.ishaIq);
+          } else {
+            CONFIG.iqamah.fajr = decToArr(todayAPI.fajrIq);
+            CONFIG.iqamah.dhuhr = decToArr(todayAPI.dhuhrIq);
+            CONFIG.iqamah.asr = decToArr(todayAPI.asrIq);
+            CONFIG.iqamah.maghrib = null;
+            CONFIG.iqamah.isha = decToArr(todayAPI.ishaIq);
+          }
+        } catch(e){
+          CONFIG.iqamah.fajr = decToArr(todayAPI.fajrIq);
+          CONFIG.iqamah.dhuhr = decToArr(todayAPI.dhuhrIq);
+          CONFIG.iqamah.asr = decToArr(todayAPI.asrIq);
+          CONFIG.iqamah.maghrib = null;
+          CONFIG.iqamah.isha = decToArr(todayAPI.ishaIq);
+        }
 
         // Jumu'ah from API
         if(todayAPI.juma1) CONFIG.jumuah1 = fmt(parseAPITime(todayAPI.juma1));
