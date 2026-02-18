@@ -645,7 +645,6 @@
           localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
           lastDay = '';
           update();
-          fetchFromAPI();
         }
       })
       .subscribe((status) => {
@@ -714,6 +713,7 @@
         apiTmrTimes = parseAPIEntry(tmrData);
 
         if(apiTimes){
+          // API sets start times only
           CONFIG.manualStart = {
             fajr: apiTimes.fajr,
             dhuhr: apiTimes.dhuhr,
@@ -722,11 +722,17 @@
             isha: apiTimes.isha,
           };
           CONFIG.autoCalc = false;
-          CONFIG.iqamah.fajr = decToArr(apiTimes.fajrIq);
-          if(apiTimes.dhuhrIq) CONFIG.iqamah.dhuhr = decToArr(apiTimes.dhuhrIq);
-          if(apiTimes.asrIq) CONFIG.iqamah.asr = decToArr(apiTimes.asrIq);
-          CONFIG.iqamah.maghrib = null;
-          if(apiTimes.ishaIq) CONFIG.iqamah.isha = decToArr(apiTimes.ishaIq);
+
+          // Only use API iqamah if no admin override exists in Supabase
+          const saved = localStorage.getItem('mosqueConfig');
+          const hasAdminConfig = saved && JSON.parse(saved).iqamah;
+          if(!hasAdminConfig){
+            CONFIG.iqamah.fajr = decToArr(apiTimes.fajrIq);
+            if(apiTimes.dhuhrIq) CONFIG.iqamah.dhuhr = decToArr(apiTimes.dhuhrIq);
+            if(apiTimes.asrIq) CONFIG.iqamah.asr = decToArr(apiTimes.asrIq);
+            CONFIG.iqamah.maghrib = null;
+            if(apiTimes.ishaIq) CONFIG.iqamah.isha = decToArr(apiTimes.ishaIq);
+          }
 
           localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
           lastDay = '';
