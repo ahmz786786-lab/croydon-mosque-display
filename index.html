@@ -171,16 +171,12 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .p-start .tomorrow { display: none; font-size: 1.8vh; color: #999; font-weight: 400; }
-
     .p-iqamah .main {
       font-size: 3.5vh;
       font-weight: 800;
       color: #6E1E2C;
       font-variant-numeric: tabular-nums;
     }
-
-    .p-iqamah .tomorrow { display: none; font-size: 1.8vh; color: #999; font-weight: 400; }
 
     /* ── JUMUAH ROW ── */
     .jumuah-row {
@@ -438,32 +434,32 @@
 
       <div class="p-row" id="row-fajr">
         <div class="p-name">Fajr <span class="badge-next">NEXT</span></div>
-        <div class="p-start"><div class="main" id="start-fajr">5:35</div><div class="tomorrow" id="tmr-s-fajr"></div></div>
-        <div class="p-iqamah"><div class="main" id="iq-fajr">6:30</div><div class="tomorrow" id="tmr-i-fajr"></div></div>
+        <div class="p-start"><div class="main" id="start-fajr">5:35</div></div>
+        <div class="p-iqamah"><div class="main" id="iq-fajr">6:30</div></div>
       </div>
 
       <div class="p-row" id="row-dhuhr">
         <div class="p-name">Dhuhr <span class="badge-next">NEXT</span></div>
-        <div class="p-start"><div class="main" id="start-dhuhr">12:19</div><div class="tomorrow" id="tmr-s-dhuhr"></div></div>
-        <div class="p-iqamah"><div class="main" id="iq-dhuhr">1:30</div><div class="tomorrow" id="tmr-i-dhuhr"></div></div>
+        <div class="p-start"><div class="main" id="start-dhuhr">12:19</div></div>
+        <div class="p-iqamah"><div class="main" id="iq-dhuhr">1:30</div></div>
       </div>
 
       <div class="p-row" id="row-asr">
         <div class="p-name">Asr <span class="badge-next">NEXT</span></div>
-        <div class="p-start"><div class="main" id="start-asr">3:13</div><div class="tomorrow" id="tmr-s-asr"></div></div>
-        <div class="p-iqamah"><div class="main" id="iq-asr">4:00</div><div class="tomorrow" id="tmr-i-asr"></div></div>
+        <div class="p-start"><div class="main" id="start-asr">3:13</div></div>
+        <div class="p-iqamah"><div class="main" id="iq-asr">4:00</div></div>
       </div>
 
       <div class="p-row" id="row-maghrib">
         <div class="p-name">Maghrib <span class="badge-next">NEXT</span></div>
-        <div class="p-start"><div class="main" id="start-maghrib">5:07</div><div class="tomorrow" id="tmr-s-maghrib"></div></div>
-        <div class="p-iqamah"><div class="main" id="iq-maghrib">5:07</div><div class="tomorrow" id="tmr-i-maghrib"></div></div>
+        <div class="p-start"><div class="main" id="start-maghrib">5:07</div></div>
+        <div class="p-iqamah"><div class="main" id="iq-maghrib">5:07</div></div>
       </div>
 
       <div class="p-row" id="row-isha">
         <div class="p-name">Isha <span class="badge-next">NEXT</span></div>
-        <div class="p-start"><div class="main" id="start-isha">6:55</div><div class="tomorrow" id="tmr-s-isha"></div></div>
-        <div class="p-iqamah"><div class="main" id="iq-isha">8:00</div><div class="tomorrow" id="tmr-i-isha"></div></div>
+        <div class="p-start"><div class="main" id="start-isha">6:55</div></div>
+        <div class="p-iqamah"><div class="main" id="iq-isha">8:00</div></div>
       </div>
 
       <!-- Jumuah -->
@@ -797,11 +793,6 @@
         document.getElementById('iq-maghrib').textContent=iqShort('maghrib',today.maghrib);
         document.getElementById('iq-isha').textContent=iqShort('isha',today.isha);
 
-        // Clear tomorrow labels on day change (they update per-second below)
-        salah.forEach(p=>{
-          document.getElementById(`tmr-s-${p}`).textContent='';
-          document.getElementById(`tmr-i-${p}`).textContent='';
-        });
 
         document.getElementById('sunrise').textContent=fmt(todayAPI?todayAPI.sunrise:today.sunrise);
         document.getElementById('ishraq').textContent=fmt(todayAPI?todayAPI.ishraq:today.sunrise+CONFIG.ishraqOffset/60);
@@ -841,24 +832,6 @@
         if(p===next){row.classList.add('active');if(diff<=15)row.classList.add('iqamah-soon');}
       });
 
-      /* Show tomorrow's times 15 min after each prayer's iqamah */
-      if(tmrAPI){
-        const tmrIqMap={fajr:tmrAPI.fajrIq,dhuhr:tmrAPI.dhuhrIq,asr:tmrAPI.asrIq,maghrib:tmrAPI.maghrib,isha:tmrAPI.ishaIq};
-        const todIqMap={fajr:iqDec('fajr',today.fajr),dhuhr:iqDec('dhuhr',today.dhuhr),asr:iqDec('asr',today.asr),maghrib:iqDec('maghrib',today.maghrib),isha:iqDec('isha',today.isha)};
-        salah.forEach(p=>{
-          const passed = cur >= todIqMap[p] + 15/60;
-          const todStart=fmt(today[p]), tmrStart=fmt(tmrAPI[p]);
-          const todIq=iqShort(p,today[p]), tmrIq=fmt(tmrIqMap[p]);
-          const sEl=document.getElementById(`tmr-s-${p}`);
-          const iEl=document.getElementById(`tmr-i-${p}`);
-          const showStart = passed && todStart!==tmrStart;
-          const showIq = passed && todIq!==tmrIq;
-          sEl.textContent = showStart ? tmrStart : '';
-          sEl.style.display = showStart ? 'block' : 'none';
-          iEl.textContent = showIq ? tmrIq : '';
-          iEl.style.display = showIq ? 'block' : 'none';
-        });
-      }
     }
 
     update();
