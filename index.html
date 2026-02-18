@@ -871,6 +871,21 @@
     fetchRemoteConfig().then(() => fetchFromAPI());
     setInterval(fetchFromAPI, 3*60*60*1000);
 
+    /* ── AUTO-RELOAD: check for new deployment every 5 min ── */
+    let pageHash = null;
+    async function checkForUpdate(){
+      try {
+        const resp = await fetch(location.href, { cache: 'no-store' });
+        const text = await resp.text();
+        let hash = 0;
+        for(let i=0;i<text.length;i++){hash=((hash<<5)-hash)+text.charCodeAt(i);hash|=0;}
+        if(pageHash===null){ pageHash=hash; return; }
+        if(hash!==pageHash){ console.log('New version detected, reloading...'); location.reload(); }
+      } catch(e){}
+    }
+    checkForUpdate();
+    setInterval(checkForUpdate, 5*60*1000);
+
     /* ── SETTINGS PANEL LOGIC ── */
     const overlay = document.getElementById('settingsOverlay');
 
