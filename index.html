@@ -822,7 +822,8 @@
 
       const cur=h+m/60+s/3600;
       let next=null,nextT=null;
-      for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt){next=p;nextT=jt;break;}}
+      const SWITCH_DELAY=1; // 1 hour after iqamah before switching to next prayer
+      for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt+SWITCH_DELAY){next=p;nextT=jt;break;}}
       if(!next){next='fajr';nextT=iqDec('fajr',today.fajr)+24;}
 
       let diff=(nextT-cur)*60;if(diff<0)diff+=1440;
