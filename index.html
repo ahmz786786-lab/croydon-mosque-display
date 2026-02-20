@@ -749,10 +749,10 @@
       return times;
     }
 
-    function fmt(h){if(isNaN(h))return"--:--";let hr=Math.floor(h),mn=Math.round((h-hr)*60);if(mn===60){hr++;mn=0;}let h12=hr%12||12;return`${h12}:${mn.toString().padStart(2,'0')}`;}
+    function fmt(h){if(isNaN(h))return"--:--";let hr=Math.floor(h),mn=Math.round((h-hr)*60);if(mn===60){hr++;mn=0;}return`${hr.toString().padStart(2,'0')}:${mn.toString().padStart(2,'0')}`;}
     function fmt12(h){if(isNaN(h))return"--:--";let hr=Math.floor(h),mn=Math.round((h-hr)*60);if(mn===60){hr++;mn=0;}let ap=hr>=12?"PM":"AM",h12=hr%12||12;return`${h12}:${mn.toString().padStart(2,'0')} ${ap}`;}
     function iqFmt(p,sd){if(CONFIG.iqamah[p]===null)return fmt12(sd);let[h,m]=CONFIG.iqamah[p];let ap=h>=12?"PM":"AM";return`${h%12||12}:${m.toString().padStart(2,'0')} ${ap}`;}
-    function iqShort(p,sd){if(CONFIG.iqamah[p]===null)return fmt(sd);let[h,m]=CONFIG.iqamah[p];return`${h%12||12}:${m.toString().padStart(2,'0')}`;}
+    function iqShort(p,sd){if(CONFIG.iqamah[p]===null)return fmt(sd);let[h,m]=CONFIG.iqamah[p];return`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;}
     function iqDec(p,sd){if(CONFIG.iqamah[p]===null)return sd;let[h,m]=CONFIG.iqamah[p];return h+m/60;}
 
     function hijriAr(d, maghribDec){
