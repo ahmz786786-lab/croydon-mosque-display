@@ -623,7 +623,7 @@
           Object.assign(CONFIG, merged);
           CONFIG.iqamah = merged.iqamah;
           localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
-          lastDay = '';
+          lastState = '';
           update();
         }
       } catch(e){ console.error('Supabase fetch failed:', e); }
@@ -639,7 +639,7 @@
           Object.assign(CONFIG, merged);
           CONFIG.iqamah = merged.iqamah;
           localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
-          lastDay = '';
+          lastState = '';
           update();
         }
       })
@@ -714,7 +714,7 @@
         if(todayAPI.juma2) CONFIG.jumuah2 = fmt(parseAPITime(todayAPI.juma2));
 
         localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
-        lastDay = '';
+        lastState = '';
         update();
         console.log('Prayer times updated from API:', todayAPI);
       } catch(e){ console.warn('API fetch failed, using local times:', e); }
@@ -772,34 +772,65 @@
     }
 
     const salah=['fajr','dhuhr','asr','maghrib','isha'];
-    let today=null,tomorrow=null,lastDay='';
+    let today=null,tomorrow=null,lastState='';
 
     function update(){
       const now=new Date(),day=now.toDateString();
-      if(day!==lastDay){
+      const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+      const cur=h+m/60+s/3600;
+
+      // Recalculate on date change
+      if(day!==lastState.split('|')[0]){
         today=calcTimes(now);
         const tmr=new Date(now);tmr.setDate(tmr.getDate()+1);
         tomorrow=calcTimes(tmr);
-        lastDay=day;
+      }
 
-        document.getElementById('start-fajr').textContent=fmt(today.fajr);
-        document.getElementById('start-dhuhr').textContent=fmt(today.dhuhr);
-        document.getElementById('start-asr').textContent=fmt(today.asr);
-        document.getElementById('start-maghrib').textContent=fmt(today.maghrib);
-        document.getElementById('start-isha').textContent=fmt(today.isha);
+      // After Maghrib start → show tomorrow's prayer times
+      const maghribStart = today.maghrib;
+      const afterMaghrib = cur >= maghribStart;
+      const stateKey = `${day}|${afterMaghrib}`;
 
-        document.getElementById('iq-fajr').textContent=iqShort('fajr',today.fajr);
-        document.getElementById('iq-dhuhr').textContent=iqShort('dhuhr',today.dhuhr);
-        document.getElementById('iq-asr').textContent=iqShort('asr',today.asr);
-        document.getElementById('iq-maghrib').textContent=iqShort('maghrib',today.maghrib);
-        document.getElementById('iq-isha').textContent=iqShort('isha',today.isha);
+      if(stateKey!==lastState){
+        lastState=stateKey;
 
+        const showTmr = afterMaghrib;
 
-        document.getElementById('sunrise').textContent=fmt(todayAPI?todayAPI.sunrise:today.sunrise);
-        document.getElementById('ishraq').textContent=fmt(todayAPI?todayAPI.ishraq:today.sunrise+CONFIG.ishraqOffset/60);
-        document.getElementById('zawaal').textContent=fmt(todayAPI?todayAPI.zawaal:today.zawaal);
+        // Pick start times: prefer API data for the correct day
+        const api = showTmr ? tmrAPI : todayAPI;
+        const calc = showTmr ? tomorrow : today;
 
+        salah.forEach(p=>{
+          const startVal = api ? api[p] : calc[p];
+          document.getElementById('start-'+p).textContent=fmt(startVal);
+        });
+
+        // Iqamah times: use tomorrow's API iqamah when showing tomorrow
+        salah.forEach(p=>{
+          if(showTmr && tmrAPI){
+            const iqKey = p+'Iq';
+            const iqVal = tmrAPI[iqKey];
+            document.getElementById('iq-'+p).textContent = iqVal != null ? fmt(iqVal) : iqShort(p, calc[p]);
+          } else {
+            document.getElementById('iq-'+p).textContent=iqShort(p,calc[p]);
+          }
+        });
+
+        // Sunrise/Ishraq/Zawaal from the displayed day
+        if(api){
+          document.getElementById('sunrise').textContent=fmt(api.sunrise);
+          document.getElementById('ishraq').textContent=fmt(api.ishraq || (api.sunrise+CONFIG.ishraqOffset/60));
+          document.getElementById('zawaal').textContent=fmt(api.zawaal);
+        } else {
+          document.getElementById('sunrise').textContent=fmt(calc.sunrise);
+          document.getElementById('ishraq').textContent=fmt(calc.sunrise+CONFIG.ishraqOffset/60);
+          document.getElementById('zawaal').textContent=fmt(calc.zawaal);
+        }
+
+        // Gregorian date: always today (updates at midnight only)
         document.getElementById('gregDate').textContent=formatGregorian(now);
+
+        // Hijri date: switches after Maghrib (already handled by hijriAr)
         const hijriEl = document.getElementById('hijriDate');
         if(CONFIG.showHijri){ hijriEl.style.display=''; hijriEl.textContent=hijriAr(now, today.maghrib); }
         else { hijriEl.style.display='none'; }
@@ -810,7 +841,7 @@
         document.querySelector('.footer-text').textContent=CONFIG.mosqueName;
       }
 
-      const h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
+      // Clock (updates every second)
       if(CONFIG.clockFormat===12){
         let h12=h%12||12;
         document.getElementById('hours').textContent=h12.toString();
@@ -820,11 +851,18 @@
         document.getElementById('mins').textContent=m.toString().padStart(2,'0');
       }
 
-      const cur=h+m/60+s/3600;
+      // Next prayer highlighting
       let next=null,nextT=null;
-      const SWITCH_DELAY=1; // 1 hour after iqamah before switching to next prayer
-      for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt+SWITCH_DELAY){next=p;nextT=jt;break;}}
-      if(!next){next='fajr';nextT=iqDec('fajr',today.fajr)+24;}
+      const SWITCH_DELAY=1;
+      if(afterMaghrib){
+        // After Maghrib: all today's prayers are done, Fajr tomorrow is next
+        next='fajr';
+        const tmrFajrIq = (tmrAPI && tmrAPI.fajrIq) ? tmrAPI.fajrIq : iqDec('fajr',tomorrow.fajr);
+        nextT=tmrFajrIq+24;
+      } else {
+        for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt+SWITCH_DELAY){next=p;nextT=jt;break;}}
+        if(!next){next='fajr';nextT=iqDec('fajr',today.fajr)+24;}
+      }
 
       let diff=(nextT-cur)*60;if(diff<0)diff+=1440;
 
@@ -996,7 +1034,7 @@
 
       localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
       saveToSupabase(JSON.parse(JSON.stringify(CONFIG)));
-      lastDay = '';
+      lastState = '';
       closeSettings();
       update();
     }
@@ -1006,7 +1044,7 @@
       Object.assign(CONFIG, deepClone(DEFAULT_CONFIG));
       CONFIG.iqamah = deepClone(DEFAULT_CONFIG.iqamah);
       saveToSupabase({});
-      lastDay = '';
+      lastState = '';
       closeSettings();
       update();
     }
