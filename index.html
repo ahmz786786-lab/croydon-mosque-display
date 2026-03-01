@@ -660,108 +660,106 @@
       } catch(e){ console.error('Supabase save failed:', e); }
     }
 
-    /* ── Fetch prayer times from Croydon Mosque website ── */
-    let websiteTimes = null;
-    let websiteTmrTimes = null;
-    let tomorrowIqamah = null;
+    /* ── Fetch prayer times from Techtronix Salaah API (same as main website) ── */
+    const SALAAH_API_URL = 'https://techtronix.co.uk/shared/salaah_api.php?partner_id=5';
+    const TOMORROW_API_URL = 'https://techtronix.co.uk/shared/salaah_api.php?partner_id=5&type=tomorrowTimes';
+    const TOMORROW_SWITCH_MINS = 5; // minutes after iqamah to switch to tomorrow's time
 
-    function parseCellTime(cell, isPM){
-      const clone = cell.cloneNode(true);
-      clone.querySelectorAll('input').forEach(i=>i.remove());
-      const txt = clone.textContent.trim().replace(/[^\d:]/g,'');
-      if(!txt) return null;
-      const [h,m] = txt.split(':').map(Number);
-      let hr = h;
-      if(isPM && hr < 12) hr += 12;
-      return hr + m/60;
+    let apiToday = null;   // today's data from API
+    let apiTomorrow = null; // tomorrow's data from API
+
+    function timeStrToDec(t){
+      if(!t) return null;
+      const [h,m] = t.split(':').map(Number);
+      return h + m/60;
+    }
+    function timeStrToArr(t){
+      if(!t) return null;
+      const [h,m] = t.split(':').map(Number);
+      return [h,m];
     }
 
-    function parseRow(row){
-      if(!row) return null;
-      const c = row.querySelectorAll('td');
-      if(c.length < 13) return null;
+    function parseApiData(data){
+      if(!data || !data.fajr_begins) return null;
       return {
-        fajr: parseCellTime(c[3],false),
-        fajrIq: parseCellTime(c[4],false),
-        sunrise: parseCellTime(c[5],false),
-        dhuhr: parseCellTime(c[6],true),
-        dhuhrIq: parseCellTime(c[7],true),
-        asr: parseCellTime(c[8],true),
-        asrIq: parseCellTime(c[9],true),
-        maghrib: parseCellTime(c[10],true),
-        isha: parseCellTime(c[11],true),
-        ishaIq: parseCellTime(c[12],true),
+        fajr: timeStrToDec(data.fajr_begins),
+        fajrIq: timeStrToArr(data.fajr_jamat),
+        sunrise: timeStrToDec(data.sunrise),
+        ishraq: timeStrToDec(data.ishraq_begins),
+        zawaal: timeStrToDec(data.zawal_begins),
+        dhuhr: timeStrToDec(data.zuhr_begins),
+        dhuhrIq: timeStrToArr(data.zuhr_jamat),
+        asr: timeStrToDec(data.asr_begins),
+        asrIq: timeStrToArr(data.asr_jamat),
+        maghrib: timeStrToDec(data.maghrib_begins),
+        maghribIq: timeStrToArr(data.maghrib_jamat),
+        isha: timeStrToDec(data.isha_begins),
+        ishaIq: timeStrToArr(data.isha_jamat),
+        jumuah1: data.juma_1st ? data.juma_1st.substring(0,5) : null,
+        jumuah2: data.juma_2nd ? data.juma_2nd.substring(0,5) : null,
       };
     }
 
-    function decToArr(dec){
-      if(dec==null) return null;
-      let hr=Math.floor(dec), mn=Math.round((dec-hr)*60);
-      if(mn===60){hr++;mn=0;}
-      return [hr,mn];
+    async function fetchApi(url){
+      for(let attempt=1; attempt<=3; attempt++){
+        try {
+          const controller = new AbortController();
+          const tid = setTimeout(()=>controller.abort(), 10000);
+          const resp = await fetch(url, {signal: controller.signal});
+          clearTimeout(tid);
+          const data = await resp.json();
+          const parsed = parseApiData(data);
+          if(parsed) return parsed;
+        } catch(e){
+          if(attempt<3) await new Promise(r=>setTimeout(r, attempt*1000));
+        }
+      }
+      return null;
     }
 
     async function fetchFromWebsite(){
       try {
-        const url = 'https://api.allorigins.win/raw?url='+encodeURIComponent('https://www.croydonmosque.com/?section=prayer');
-        const resp = await fetch(url);
-        if(!resp.ok) throw new Error('Fetch failed');
-        const html = await resp.text();
-        const doc = new DOMParser().parseFromString(html,'text/html');
+        const [todayData, tmrData] = await Promise.all([
+          fetchApi(SALAAH_API_URL),
+          fetchApi(TOMORROW_API_URL)
+        ]);
 
-        const todayRow = doc.querySelector('.rowToday');
-        if(!todayRow) throw new Error('Today row not found');
+        if(todayData){
+          apiToday = todayData;
+          apiTomorrow = tmrData;
 
-        websiteTimes = parseRow(todayRow);
-        websiteTmrTimes = parseRow(todayRow.nextElementSibling);
-
-        if(websiteTimes){
+          // Update CONFIG with today's API data
           CONFIG.manualStart = {
-            fajr: websiteTimes.fajr,
-            dhuhr: websiteTimes.dhuhr,
-            asr: websiteTimes.asr,
-            maghrib: websiteTimes.maghrib,
-            isha: websiteTimes.isha,
+            fajr: todayData.fajr,
+            dhuhr: todayData.dhuhr,
+            asr: todayData.asr,
+            maghrib: todayData.maghrib,
+            isha: todayData.isha,
           };
           CONFIG.autoCalc = false;
-          CONFIG.iqamah.fajr = decToArr(websiteTimes.fajrIq);
-          if(websiteTimes.dhuhrIq) CONFIG.iqamah.dhuhr = decToArr(websiteTimes.dhuhrIq);
-          if(websiteTimes.asrIq) CONFIG.iqamah.asr = decToArr(websiteTimes.asrIq);
-          CONFIG.iqamah.maghrib = null;
-          if(websiteTimes.ishaIq) CONFIG.iqamah.isha = decToArr(websiteTimes.ishaIq);
+          CONFIG.iqamah.fajr = todayData.fajrIq;
+          CONFIG.iqamah.dhuhr = todayData.dhuhrIq;
+          CONFIG.iqamah.asr = todayData.asrIq;
+          CONFIG.iqamah.maghrib = todayData.maghribIq;
+          CONFIG.iqamah.isha = todayData.ishaIq;
 
-          // Store tomorrow's iqamah times from website scrape
-          if(websiteTmrTimes){
-            tomorrowIqamah = {
-              fajr: decToArr(websiteTmrTimes.fajrIq),
-              dhuhr: decToArr(websiteTmrTimes.dhuhrIq),
-              asr: decToArr(websiteTmrTimes.asrIq),
-              maghrib: null,
-              isha: decToArr(websiteTmrTimes.ishaIq),
-            };
+          // Jumu'ah times
+          if(todayData.jumuah1){
+            const [jh,jm] = todayData.jumuah1.split(':').map(Number);
+            CONFIG.jumuah1 = `${jh%12||12}:${jm.toString().padStart(2,'0')}`;
           }
-
-          // Parse Jumu'ah from sidebar
-          const sidebar = doc.querySelector('#prayer-time-wrapper table');
-          if(sidebar){
-            const rows = sidebar.querySelectorAll('tr');
-            rows.forEach(r=>{
-              const cells = r.querySelectorAll('td');
-              if(cells.length>=2){
-                const label = cells[0].textContent.trim().toLowerCase();
-                const val = cells[1].textContent.trim().replace(/\s*(am|pm)\s*/gi,'');
-                if(label.includes('juma 1') || label.includes('jumu')) CONFIG.jumuah1 = val;
-                if(label.includes('juma 2')) CONFIG.jumuah2 = val;
-              }
-            });
+          if(todayData.jumuah2){
+            const [jh,jm] = todayData.jumuah2.split(':').map(Number);
+            CONFIG.jumuah2 = `${jh%12||12}:${jm.toString().padStart(2,'0')}`;
           }
 
           localStorage.setItem('mosqueConfig', JSON.stringify(CONFIG));
           lastState = '';
           update();
-          console.log('Prayer times updated from website:', websiteTimes);
+          console.log('Prayer times updated from API:', todayData);
+          if(tmrData) console.log('Tomorrow times from API:', tmrData);
         }
-      } catch(e){ console.warn('Website fetch failed, using local times:', e); }
+      } catch(e){ console.warn('API fetch failed, using cached times:', e); }
     }
 
     const toRad=d=>d*Math.PI/180, toDeg=r=>r*180/Math.PI;
@@ -799,9 +797,9 @@
     function iqShort(p,sd){if(CONFIG.iqamah[p]===null)return fmt(sd);let[h,m]=CONFIG.iqamah[p];return`${h%12||12}:${m.toString().padStart(2,'0')}`;}
     function iqDec(p,sd){if(CONFIG.iqamah[p]===null)return sd;let[h,m]=CONFIG.iqamah[p];return h+m/60;}
 
-    /* Get iqamah array for a prayer, optionally from tomorrow's scraped data */
+    /* Get iqamah array for a prayer, optionally from tomorrow's API data */
     function getIqArr(p, useTmr){
-      if(useTmr && tomorrowIqamah && tomorrowIqamah[p]) return tomorrowIqamah[p];
+      if(useTmr && apiTomorrow && apiTomorrow[p+'Iq']) return apiTomorrow[p+'Iq'];
       return CONFIG.iqamah[p];
     }
     function iqShortFromArr(arr, sd){if(!arr)return fmt(sd);let[h,m]=arr;return`${h%12||12}:${m.toString().padStart(2,'0')}`;}
@@ -837,11 +835,11 @@
       }
 
       // Per-prayer logic: each prayer switches to tomorrow's time
-      // 5 minutes after its iqamah has passed
+      // TOMORROW_SWITCH_MINS after its iqamah has passed
       const showTmrPerPrayer = {};
       salah.forEach(p => {
         const iqTime = iqDec(p, today[p]); // today's iqamah time in decimal hours
-        showTmrPerPrayer[p] = cur >= iqTime + 5/60; // 5 mins after iqamah
+        showTmrPerPrayer[p] = cur >= iqTime + TOMORROW_SWITCH_MINS/60;
       });
 
       // Build cache key from per-prayer states
@@ -856,8 +854,8 @@
           let startTime, iqArr;
 
           if(useTmr){
-            // Show tomorrow's times
-            startTime = (websiteTmrTimes && websiteTmrTimes[p] != null) ? websiteTmrTimes[p] : tomorrow[p];
+            // Show tomorrow's times from API, fallback to calculated
+            startTime = (apiTomorrow && apiTomorrow[p] != null) ? apiTomorrow[p] : tomorrow[p];
             iqArr = getIqArr(p, true);
           } else {
             // Show today's times
@@ -870,28 +868,28 @@
 
           // Tomorrow sub-text: only show when displaying today (to preview tomorrow)
           if(!useTmr){
-            const tmrStart = (websiteTmrTimes && websiteTmrTimes[p] != null) ? websiteTmrTimes[p] : tomorrow[p];
+            const tmrStart = (apiTomorrow && apiTomorrow[p] != null) ? apiTomorrow[p] : tomorrow[p];
             const todayStr = fmt(startTime), tmrStr = fmt(tmrStart);
             document.getElementById(`tmr-s-${p}`).textContent = (todayStr !== tmrStr) ? tmrStr : '';
-            // Iqamah sub-text for maghrib
             if(p === 'maghrib'){
-              const tmrIqStr = fmt(tmrStart); // maghrib iqamah = start
-              const todayIqStr = fmt(startTime);
+              const tmrIqArr = getIqArr(p, true);
+              const tmrIqStr = iqShortFromArr(tmrIqArr, tmrStart);
+              const todayIqStr = iqShortFromArr(iqArr, today[p]);
               document.getElementById('tmr-i-maghrib').textContent = (todayIqStr !== tmrIqStr) ? tmrIqStr : '';
             }
           } else {
-            // Already showing tomorrow, clear sub-text
             document.getElementById(`tmr-s-${p}`).textContent = '';
             if(p === 'maghrib') document.getElementById('tmr-i-maghrib').textContent = '';
           }
         });
 
-        // Sunrise/Ishraq/Zawaal: show tomorrow's after all prayers have switched
+        // Sunrise/Ishraq/Zawaal: use API data, switch after all prayers switched
         const allSwitched = salah.every(p => showTmrPerPrayer[p]);
-        const sunTimes = allSwitched ? tomorrow : today;
-        document.getElementById('sunrise').textContent = fmt(sunTimes.sunrise);
-        document.getElementById('ishraq').textContent = fmt(sunTimes.sunrise + CONFIG.ishraqOffset/60);
-        document.getElementById('zawaal').textContent = fmt(sunTimes.zawaal);
+        const apiSrc = allSwitched ? apiTomorrow : apiToday;
+        const calcSrc = allSwitched ? tomorrow : today;
+        document.getElementById('sunrise').textContent = fmt(apiSrc ? apiSrc.sunrise : calcSrc.sunrise);
+        document.getElementById('ishraq').textContent = fmt(apiSrc ? apiSrc.ishraq : calcSrc.sunrise + CONFIG.ishraqOffset/60);
+        document.getElementById('zawaal').textContent = fmt(apiSrc ? apiSrc.zawaal : calcSrc.zawaal);
 
         // Gregorian date always shows today
         document.getElementById('gregDate').textContent = formatGregorian(now);
