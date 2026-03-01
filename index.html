@@ -836,79 +836,72 @@
         tomorrow=calcTimes(tmr);
       }
 
-      // Determine display state: after Maghrib start → show tomorrow's times
-      const maghribStart = today.maghrib;
-      const afterMaghrib = cur >= maghribStart;
+      // Per-prayer logic: each prayer switches to tomorrow's time
+      // 5 minutes after its iqamah has passed
+      const showTmrPerPrayer = {};
+      salah.forEach(p => {
+        const iqTime = iqDec(p, today[p]); // today's iqamah time in decimal hours
+        showTmrPerPrayer[p] = cur >= iqTime + 5/60; // 5 mins after iqamah
+      });
 
-      // Cache key includes date + state to avoid unnecessary DOM updates
-      const stateKey = `${day}|${afterMaghrib}`;
+      // Build cache key from per-prayer states
+      const stateKey = `${day}|${salah.map(p => showTmrPerPrayer[p]?'1':'0').join('')}`;
 
       if(stateKey!==lastState){
         lastState=stateKey;
 
-        // Pick which day's times to display
-        const showTmr = afterMaghrib;
-        const disp = showTmr ? tomorrow : today;
+        // Display start & iqamah times per prayer
+        salah.forEach(p => {
+          const useTmr = showTmrPerPrayer[p];
+          let startTime, iqArr;
 
-        // For tomorrow's start times, prefer website-scraped data if available
-        const dispStart = {};
-        if(showTmr && websiteTmrTimes){
-          salah.forEach(p=>{ dispStart[p] = websiteTmrTimes[p] != null ? websiteTmrTimes[p] : disp[p]; });
-        } else {
-          salah.forEach(p=>{ dispStart[p] = disp[p]; });
-        }
-
-        // Display start times
-        salah.forEach(p=>{
-          document.getElementById('start-'+p).textContent=fmt(dispStart[p]);
-        });
-
-        // Display iqamah times (use tomorrow's scraped iqamah when showing tomorrow)
-        salah.forEach(p=>{
-          const iq = getIqArr(p, showTmr);
-          document.getElementById('iq-'+p).textContent=iqShortFromArr(iq, dispStart[p]);
-        });
-
-        // Tomorrow sub-text: show the day after the displayed day if different
-        const dayAfter = showTmr ? null : tomorrow; // if showing tomorrow already, hide sub-text
-        if(!showTmr){
-          if(websiteTmrTimes){
-            const tmrMap={fajr:websiteTmrTimes.fajr,dhuhr:websiteTmrTimes.dhuhr,asr:websiteTmrTimes.asr,maghrib:websiteTmrTimes.maghrib,isha:websiteTmrTimes.isha};
-            salah.forEach(p=>{
-              const t=fmt(dispStart[p]),tm=fmt(tmrMap[p]);
-              document.getElementById(`tmr-s-${p}`).textContent=(t!==tm)?tm:'';
-            });
-            const ti=fmt(dispStart.maghrib),tmi=fmt(websiteTmrTimes.maghrib);
-            document.getElementById('tmr-i-maghrib').textContent=(ti!==tmi)?tmi:'';
+          if(useTmr){
+            // Show tomorrow's times
+            startTime = (websiteTmrTimes && websiteTmrTimes[p] != null) ? websiteTmrTimes[p] : tomorrow[p];
+            iqArr = getIqArr(p, true);
           } else {
-            salah.forEach(p=>{
-              const t=fmt(dispStart[p]),tm=fmt(tomorrow[p]);
-              document.getElementById(`tmr-s-${p}`).textContent=(t!==tm)?tm:'';
-            });
-            const ti=fmt(dispStart.maghrib),tmi=fmt(tomorrow.maghrib);
-            document.getElementById('tmr-i-maghrib').textContent=(ti!==tmi)?tmi:'';
+            // Show today's times
+            startTime = today[p];
+            iqArr = getIqArr(p, false);
           }
-        } else {
-          // Already showing tomorrow, clear sub-text
-          salah.forEach(p=>{
-            document.getElementById(`tmr-s-${p}`).textContent='';
-          });
-          document.getElementById('tmr-i-maghrib').textContent='';
-        }
 
-        // Sunrise/Ishraq/Zawaal from the displayed day
-        document.getElementById('sunrise').textContent=fmt(disp.sunrise);
-        document.getElementById('ishraq').textContent=fmt(disp.sunrise+CONFIG.ishraqOffset/60);
-        document.getElementById('zawaal').textContent=fmt(disp.zawaal);
+          document.getElementById('start-'+p).textContent = fmt(startTime);
+          document.getElementById('iq-'+p).textContent = iqShortFromArr(iqArr, startTime);
 
-        // Gregorian date always shows today (updates at midnight only)
-        document.getElementById('gregDate').textContent=formatGregorian(now);
+          // Tomorrow sub-text: only show when displaying today (to preview tomorrow)
+          if(!useTmr){
+            const tmrStart = (websiteTmrTimes && websiteTmrTimes[p] != null) ? websiteTmrTimes[p] : tomorrow[p];
+            const todayStr = fmt(startTime), tmrStr = fmt(tmrStart);
+            document.getElementById(`tmr-s-${p}`).textContent = (todayStr !== tmrStr) ? tmrStr : '';
+            // Iqamah sub-text for maghrib
+            if(p === 'maghrib'){
+              const tmrIqStr = fmt(tmrStart); // maghrib iqamah = start
+              const todayIqStr = fmt(startTime);
+              document.getElementById('tmr-i-maghrib').textContent = (todayIqStr !== tmrIqStr) ? tmrIqStr : '';
+            }
+          } else {
+            // Already showing tomorrow, clear sub-text
+            document.getElementById(`tmr-s-${p}`).textContent = '';
+            if(p === 'maghrib') document.getElementById('tmr-i-maghrib').textContent = '';
+          }
+        });
 
-        // Hijri date: shows tomorrow's Hijri after Maghrib
+        // Sunrise/Ishraq/Zawaal: show tomorrow's after all prayers have switched
+        const allSwitched = salah.every(p => showTmrPerPrayer[p]);
+        const sunTimes = allSwitched ? tomorrow : today;
+        document.getElementById('sunrise').textContent = fmt(sunTimes.sunrise);
+        document.getElementById('ishraq').textContent = fmt(sunTimes.sunrise + CONFIG.ishraqOffset/60);
+        document.getElementById('zawaal').textContent = fmt(sunTimes.zawaal);
+
+        // Gregorian date always shows today
+        document.getElementById('gregDate').textContent = formatGregorian(now);
+
+        // Hijri date: shows tomorrow's Hijri after Maghrib (Islamic day starts at Maghrib)
         const hijriEl = document.getElementById('hijriDate');
+        const afterMaghribForHijri = cur >= today.maghrib;
         if(CONFIG.showHijri){
           hijriEl.style.display='';
-          if(afterMaghrib){
+          if(afterMaghribForHijri){
             const tmrDate = new Date(now);
             tmrDate.setDate(tmrDate.getDate()+1);
             hijriEl.textContent=hijriAr(tmrDate);
@@ -933,15 +926,16 @@
         document.getElementById('mins').textContent=m.toString().padStart(2,'0');
       }
 
-      // Next prayer highlighting
+      // Next prayer highlighting — find the next prayer whose iqamah hasn't passed yet
       let next=null,nextT=null;
-      if(afterMaghrib){
-        // After Maghrib: all today's prayers are done, Fajr tomorrow is next
+      for(const p of salah){
+        const jt = iqDec(p, today[p]);
+        if(cur < jt){ next=p; nextT=jt; break; }
+      }
+      // If all today's iqamahs have passed, next is tomorrow's Fajr
+      if(!next){
         next='fajr';
         nextT=iqDecFromArr(getIqArr('fajr',true), tomorrow.fajr)+24;
-      } else {
-        for(const p of salah){const jt=iqDec(p,today[p]);if(cur<jt){next=p;nextT=jt;break;}}
-        if(!next){next='fajr';nextT=iqDec('fajr',today.fajr)+24;}
       }
 
       let diff=(nextT-cur)*60;if(diff<0)diff+=1440;
