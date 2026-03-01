@@ -572,10 +572,67 @@
   </div>
 
   <script>
-    /* ── SUPABASE ── */
+    /* ── SUPABASE (display settings DB) ── */
     const SUPABASE_URL = 'https://ivcnzmuuaxvdyepimlgj.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2Y256bXV1YXh2ZHllcGltbGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NTk4MDgsImV4cCI6MjA4NjEzNTgwOH0.z3xAZ-nIuJdJAJIvY1WZ0XksGJV455c4EycWHyqD7fI';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    /* ── SUPABASE (admin panel / shared DB) ── */
+    const ADMIN_SUPABASE_URL = 'https://yenesnuzsilofndsfeda.supabase.co';
+    const ADMIN_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbmVzbnV6c2lsb2ZuZHNmZWRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzQ0NDksImV4cCI6MjA4NTY1MDQ0OX0.BLqe9cfdBQGr_pLjXyi-4kR3L4hm-9SpuCxHKnW8cXE';
+    const adminSb = supabase.createClient(ADMIN_SUPABASE_URL, ADMIN_SUPABASE_KEY);
+
+    /* ── Islamic date from admin panel ── */
+    let adminIslamicDateSettings = null;
+
+    async function fetchAdminIslamicDate() {
+      try {
+        const { data, error } = await adminSb.from('islamic_date_settings').select('*').limit(1).single();
+        if (!error && data) {
+          adminIslamicDateSettings = data;
+          applyAdminHijriDate();
+        }
+      } catch (e) { console.error('Failed to fetch Islamic date settings:', e); }
+    }
+
+    function applyAdminHijriDate() {
+      const el = document.getElementById('hijriDate');
+      if (!el || !adminIslamicDateSettings) return;
+
+      const settings = adminIslamicDateSettings;
+
+      // Manual date override from admin
+      if (settings.manual_date_enabled && settings.manual_day && settings.manual_month && settings.manual_year) {
+        const HIJRI_MONTHS_AR = [
+          '\u0645\u062d\u0631\u0645', '\u0635\u0641\u0631', '\u0631\u0628\u064a\u0639 \u0627\u0644\u0623\u0648\u0644', '\u0631\u0628\u064a\u0639 \u0627\u0644\u062b\u0627\u0646\u064a',
+          '\u062c\u0645\u0627\u062f\u0649 \u0627\u0644\u0623\u0648\u0644\u0649', '\u062c\u0645\u0627\u062f\u0649 \u0627\u0644\u062b\u0627\u0646\u064a\u0629', '\u0631\u062c\u0628', '\u0634\u0639\u0628\u0627\u0646',
+          '\u0631\u0645\u0636\u0627\u0646', '\u0634\u0648\u0627\u0644', '\u0630\u0648 \u0627\u0644\u0642\u0639\u062f\u0629', '\u0630\u0648 \u0627\u0644\u062d\u062c\u0629'
+        ];
+        el.textContent = settings.manual_day + ' ' + (HIJRI_MONTHS_AR[settings.manual_month - 1] || '') + ' ' + settings.manual_year + ' \u0647\u0640';
+        return;
+      }
+
+      // Day adjustment from admin overrides local CONFIG.hijriAdjust
+      if (settings.day_adjustment !== null && settings.day_adjustment !== undefined) {
+        CONFIG.hijriAdjust = settings.day_adjustment;
+        lastState = '';
+        update();
+      }
+    }
+
+    // Subscribe to real-time changes on islamic_date_settings
+    adminSb.channel('display_islamic_date')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_date_settings' }, () => {
+        fetchAdminIslamicDate();
+      })
+      .subscribe();
+
+    // Also subscribe to status_bar for ticker
+    adminSb.channel('display_status_bar')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'status_bar' }, () => {
+        fetchAdminStatusBar();
+      })
+      .subscribe();
 
     /* ── DEFAULT CONFIG ── */
     const DEFAULT_CONFIG = {
@@ -948,6 +1005,7 @@
     update();
     setInterval(update,1000);
     fetchRemoteConfig().then(() => fetchFromWebsite());
+    fetchAdminIslamicDate();
     setInterval(fetchFromWebsite, 3*60*60*1000);
 
     /* ── SETTINGS PANEL LOGIC ── */
