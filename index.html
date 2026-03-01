@@ -572,22 +572,17 @@
   </div>
 
   <script>
-    /* ── SUPABASE (display settings DB) ── */
-    const SUPABASE_URL = 'https://ivcnzmuuaxvdyepimlgj.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2Y256bXV1YXh2ZHllcGltbGdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NTk4MDgsImV4cCI6MjA4NjEzNTgwOH0.z3xAZ-nIuJdJAJIvY1WZ0XksGJV455c4EycWHyqD7fI';
+    /* ── SUPABASE (shared with admin panel, app & website) ── */
+    const SUPABASE_URL = 'https://yenesnuzsilofndsfeda.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbmVzbnV6c2lsb2ZuZHNmZWRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzQ0NDksImV4cCI6MjA4NTY1MDQ0OX0.BLqe9cfdBQGr_pLjXyi-4kR3L4hm-9SpuCxHKnW8cXE';
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    /* ── SUPABASE (admin panel / shared DB) ── */
-    const ADMIN_SUPABASE_URL = 'https://yenesnuzsilofndsfeda.supabase.co';
-    const ADMIN_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbmVzbnV6c2lsb2ZuZHNmZWRhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAwNzQ0NDksImV4cCI6MjA4NTY1MDQ0OX0.BLqe9cfdBQGr_pLjXyi-4kR3L4hm-9SpuCxHKnW8cXE';
-    const adminSb = supabase.createClient(ADMIN_SUPABASE_URL, ADMIN_SUPABASE_KEY);
 
     /* ── Islamic date from admin panel ── */
     let adminIslamicDateSettings = null;
 
     async function fetchAdminIslamicDate() {
       try {
-        const { data, error } = await adminSb.from('islamic_date_settings').select('*').limit(1).single();
+        const { data, error } = await sb.from('islamic_date_settings').select('*').limit(1).single();
         if (!error && data) {
           adminIslamicDateSettings = data;
           applyAdminHijriDate();
@@ -621,16 +616,18 @@
     }
 
     // Subscribe to real-time changes on islamic_date_settings
-    adminSb.channel('display_islamic_date')
+    sb.channel('display_islamic_date')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'islamic_date_settings' }, () => {
         fetchAdminIslamicDate();
       })
       .subscribe();
 
-    // Also subscribe to status_bar for ticker
-    adminSb.channel('display_status_bar')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'status_bar' }, () => {
-        fetchAdminStatusBar();
+    // Subscribe to app_settings for Ramadan, livestream etc.
+    sb.channel('display_app_settings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, () => {
+        // Refresh display when admin changes settings
+        lastState = '';
+        update();
       })
       .subscribe();
 
