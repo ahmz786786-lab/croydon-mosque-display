@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'claude/scrape-croydon-mosque-prayers-pR2jP']
 
 permissions:
   contents: read
