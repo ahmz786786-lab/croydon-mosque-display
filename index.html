@@ -1013,7 +1013,7 @@
         if(p===next){row.classList.add('active');if(diff<=15)row.classList.add('iqamah-soon');}
       });
 
-      // Countdown banner: show when next prayer start is within 15 mins
+      // Countdown banner: show when next prayer iqamah is within 15 mins
       const banner = document.getElementById('countdownBanner');
       const cdText = document.getElementById('countdownText');
       const PRAYER_LABELS = { fajr:'Fajr', dhuhr:'Dhuhr', asr:'Asr', maghrib:'Maghrib', isha:'Isha' };
@@ -1021,10 +1021,12 @@
 
       let cdTarget = null, cdName = null;
       for(const p of salah){
-        if(cur < today[p]){ cdTarget = today[p]; cdName = p; break; }
+        const iqT = iqDec(p, today[p]);
+        if(cur < iqT){ cdTarget = iqT; cdName = p; break; }
       }
       if(cdTarget === null){
-        cdTarget = (apiTomorrow && apiTomorrow.fajr != null ? apiTomorrow.fajr : tomorrow.fajr) + 24;
+        const tmrFajrStart = (apiTomorrow && apiTomorrow.fajr != null) ? apiTomorrow.fajr : tomorrow.fajr;
+        cdTarget = iqDecFromArr(getIqArr('fajr', true), tmrFajrStart) + 24;
         cdName = 'fajr';
       }
 
