@@ -1013,23 +1013,19 @@
         if(p===next){row.classList.add('active');if(diff<=15)row.classList.add('iqamah-soon');}
       });
 
-      // Countdown banner: show when start or iqamah is within 15 mins
+      // Countdown banner: show when next prayer start is within 15 mins
       const banner = document.getElementById('countdownBanner');
       const cdText = document.getElementById('countdownText');
       const PRAYER_LABELS = { fajr:'Fajr', dhuhr:'Dhuhr', asr:'Asr', maghrib:'Maghrib', isha:'Isha' };
       const CD_THRESHOLD_MINS = 15;
 
-      let cdTarget = null, cdName = null, cdType = 'start';
+      let cdTarget = null, cdName = null;
       for(const p of salah){
-        const startT = today[p];
-        const iqT = iqDec(p, startT);
-        if(cur < startT){ cdTarget = startT; cdName = p; cdType = 'start'; break; }
-        if(cur < iqT){ cdTarget = iqT; cdName = p; cdType = 'iqamah'; break; }
+        if(cur < today[p]){ cdTarget = today[p]; cdName = p; break; }
       }
       if(cdTarget === null){
         cdTarget = (apiTomorrow && apiTomorrow.fajr != null ? apiTomorrow.fajr : tomorrow.fajr) + 24;
         cdName = 'fajr';
-        cdType = 'start';
       }
 
       const minsTil = (cdTarget - cur) * 60;
@@ -1039,12 +1035,7 @@
         const totalSecs = Math.ceil(minsTil * 60);
         const mm = Math.floor(totalSecs / 60);
         const ss = totalSecs % 60;
-        const label = PRAYER_LABELS[cdName] + (cdType === 'iqamah' ? ' Iqamah' : '');
-        if(mm >= 1){
-          cdText.textContent = `${mm} min${mm===1?'':'s'} until ${label}`;
-        } else {
-          cdText.textContent = `${ss}s until ${label}`;
-        }
+        cdText.textContent = `${PRAYER_LABELS[cdName]} in ${mm.toString().padStart(2,'0')}:${ss.toString().padStart(2,'0')}`;
       } else {
         banner.classList.remove('active','urgent');
       }
